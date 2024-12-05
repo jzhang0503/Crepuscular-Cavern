@@ -2,6 +2,26 @@ import * as THREE from '../node_modules/three/build/three.module.js'
 
 // variables for three.js
 let renderer, scene, camera;
+let mesh;
+
+webgazer.begin();
+
+webgazer.setGazeListener(function(data, elapsedTime) {
+	if (data == null) {
+		return;
+	}
+
+  // iterate through all vertices and transform
+  if (mesh != null){
+    const x = (data.x / window.innerWidth) * 2 - 1;
+    const y = -(data.y / window.innerHeight) * 2 + 1;
+
+    const newPos = new THREE.Vector3(x, y, 1);
+    newPos.unproject(camera);
+
+    mesh.position.copy(newPos);
+  }
+}).begin();
 
 init();
 
@@ -23,8 +43,8 @@ function init(){
 	camera.position.set( 0, 2, 10 );
 
   // create vertices
-  const geometry = new THREE.SphereGeometry(1,20,20);
-  geometry.rotateY(0.5);
+  const geometry = new THREE.SphereGeometry(5,20,20);
+  geometry.rotateY(0.2);
 
   // this is not necessary, just doing so for clarity on how attributes are set
   geometry.setAttribute('position', geometry.attributes.position);
@@ -42,7 +62,7 @@ function init(){
   });
 
   // add mesh with geometry and material to scene
-  const mesh = new THREE.Mesh(geometry, shaderMaterial);
+  mesh = new THREE.Mesh(geometry, shaderMaterial);
   scene.add(mesh);
 }
 

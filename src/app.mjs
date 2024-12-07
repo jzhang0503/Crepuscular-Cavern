@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { FlyControls } from 'three-addons';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 
 
@@ -10,7 +10,7 @@ let rotating = false;
 let prevMouse = new THREE.Vector3(window.innerWidth / 2, window.innerHeight / 2);
 
 
-/*webgazer.begin();
+webgazer.begin();
 
 webgazer.setGazeListener(function(data, elapsedTime) {
 	if (data == null) {
@@ -27,7 +27,7 @@ webgazer.setGazeListener(function(data, elapsedTime) {
 
     mesh.position.copy(newPos);
   }
-}).begin();*/
+}).begin();
 
 document.addEventListener("mousedown", (event) =>{
   rotating = true;
@@ -119,7 +119,6 @@ document.addEventListener('keydown', (event) => {
   // add movement to camera position
   const newPosition = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
   newPosition.add(cameraMovement);
-  console.log(newPosition);
   camera.position.set(newPosition.x, newPosition.y, newPosition.z);
   camera.updateProjectionMatrix();
 
@@ -139,7 +138,12 @@ function init(){
   // set up scene
 	scene = new THREE.Scene();
   scene.background = new THREE.Color( 0xf0f0f0 );
-  scene.add( new THREE.AmbientLight( 0xaaaaaa ) );
+  const ambientLight = new THREE.AmbientLight( 0xffffff, 0.4 );
+scene.add( ambientLight );
+
+const dirLight = new THREE.DirectionalLight( 0xefefff, 1.5 );
+dirLight.position.set( 10, 10, 10 );
+scene.add( dirLight );
 
   // set up camera
 	camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 500 );
@@ -172,7 +176,21 @@ function init(){
   mesh = new THREE.Mesh(geometry, shaderMaterial);
   scene.add(mesh);
 
-  
+  // add cave
+  const loader = new GLTFLoader();
+  loader.load(
+    'src/models/CaveVersion2.glb',
+    async function( gltf ){
+      const model = gltf.scene;
+      model.rotateY(180);
+      model.scale.set(10,10,10);
+      scene.add(model);
+    },
+    function(error){
+      console.error(error);
+    }
+  )
+
 }
 
 function animate(){

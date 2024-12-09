@@ -1,16 +1,53 @@
 <!DOCTYPE html>
 <html>
+  
+
   <head>
     <title>Cavern</title>
     <meta charset="UTF-8" />
+    <link rel="stylesheet" href="master.css" type="text/css" media="screen" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   </head>
 
   <body>
-    <div id="app"></div>
-    <script type='module' src='src/app.mjs'></script>
-    <script src="src/webgazer.js" type="text/javascript"></script>
+
+    <div> 
+      <div id="controls">
+        <input type="checkbox" id="fr" name="fr" checked />
+        <label for="fr">Foveated Rendering</label>
+
+        <div id="fr-1">
+          <input type="checkbox" id="fr-1" name="fr-1"/>
+          <label for="fr-1">Fill Pixels</label>
+        </div>
+
+        <script type="text/javascript">
+          $('#fr').change(function() {
+              $('#fr-1').toggle();
+          });
+
+        </script>
+      </div>
+      
+    </div>
+    <div id="app">
+      <script type='module' src='src/app.mjs'></script>
+      <script src="src/webgazer.js" type="text/javascript"></script>
+    </div>
   </body>
 </html>
+
+<script>
+  function openNav() {
+    document.getElementById("m_sidebar").style.width = "250px";
+    document.getElementById("app").style.marginLeft = "250px";
+  }
+
+  function closeNav() {
+    document.getElementById("m_sidebar").style.width = "0";
+    document.getElementById("app").style.marginLeft= "0";
+  }
+</script>
 
 
 <script id="vertexShader" type="x-shader/x-vertex">

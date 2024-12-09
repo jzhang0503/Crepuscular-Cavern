@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { createScene, createCamera } from './components.mjs';
 
 
 
@@ -136,19 +137,10 @@ function init(){
 	root.appendChild( renderer.domElement );
 
   // set up scene
-	scene = new THREE.Scene();
-  scene.background = new THREE.Color( 0xf0f0f0 );
-  const ambientLight = new THREE.AmbientLight( 0xffffff, 0.4 );
-scene.add( ambientLight );
-
-const dirLight = new THREE.DirectionalLight( 0xefefff, 1.5 );
-dirLight.position.set( 10, 10, 10 );
-scene.add( dirLight );
+	scene = createScene();
 
   // set up camera
-	camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 500 );
-	camera.position.set( 0, 2, 18 );
-  camera.updateProjectionMatrix();
+	camera = createCamera();
 
   // create vertices
   const geometry = new THREE.SphereGeometry(5,20,20);
@@ -160,6 +152,7 @@ scene.add( dirLight );
   geometry.setAttribute('normal', geometry.attributes.normal);
 
   // create material with shaders in index.html
+
   const shaderMaterial = new THREE.RawShaderMaterial({
     glslVersion: THREE.GLSL3,
     uniforms:{
@@ -186,7 +179,7 @@ scene.add( dirLight );
       model.traverse((o) => {
         if (o.isMesh) o.material = shaderMaterial;
       });
-      
+
       scene.add(model);
     },
     function(error){

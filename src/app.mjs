@@ -150,9 +150,6 @@ scene.add( dirLight );
 	camera.position.set( 0, 2, 18 );
   camera.updateProjectionMatrix();
 
-  // give camera controls
-  
-
   // create vertices
   const geometry = new THREE.SphereGeometry(5,20,20);
   geometry.rotateY(0.2);
@@ -184,6 +181,12 @@ scene.add( dirLight );
       const model = gltf.scene;
       model.rotateY(180);
       model.scale.set(10,10,10);
+
+      // update materials
+      model.traverse((o) => {
+        if (o.isMesh) o.material = shaderMaterial;
+      });
+      
       scene.add(model);
     },
     function(error){

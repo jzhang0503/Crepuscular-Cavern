@@ -20,13 +20,6 @@
           <input type="checkbox" id="fr-1" name="fr-1"/>
           <label for="fr-1">Fill Pixels</label>
         </div>
-
-        <script type="text/javascript">
-          $('#fr').change(function() {
-              $('#fr-1').toggle();
-          });
-
-        </script>
       </div>
       
     </div>
@@ -34,6 +27,13 @@
       <script type='module' src='src/app.mjs'></script>
       <script src="src/webgazer.js" type="text/javascript"></script>
     </div>
+
+    <script type="text/javascript">
+      $('#fr').change(function() {
+          $('#fr-1').toggle();
+      });
+
+    </script>
   </body>
 </html>
 
@@ -75,10 +75,24 @@
 
     in vec4 vColor;
 
+    uniform vec2 windowSize;
+    uniform vec3 eyeCoord;
+
     out vec4 fragColor;
   
-    void main() {
-      fragColor = vColor;
+    void main() {     
+      vec4 coord = gl_FragCoord;
+
+      vec2 eye = vec2(0.5f, 0.5f);
+      vec2 pixel = vec2(coord.x, coord.y);
+
+      float distance = distance(eye, pixel);
+
+
+      if(distance >= 500.f){
+        fragColor = vec4(0,0,1,1);
+      }
+      
     }
   </script>
   

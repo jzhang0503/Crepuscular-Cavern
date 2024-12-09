@@ -10,6 +10,14 @@ let mesh;
 let rotating = false;
 let prevMouse = new THREE.Vector3(window.innerWidth / 2, window.innerHeight / 2);
 
+let newPos = new THREE.Vector3(0,0,0);
+
+const uniforms = {
+  time: {value: 1.0},
+  windowSize: {value: new THREE.Vector2(innerWidth, innerHeight)},
+  eyeCoord: {value: newPos}
+}
+
 
 webgazer.begin();
 
@@ -23,12 +31,22 @@ webgazer.setGazeListener(function(data, elapsedTime) {
     const x = (data.x / window.innerWidth) * 2 - 1;
     const y = -(data.y / window.innerHeight) * 2 + 1;
 
-    const newPos = new THREE.Vector3(x, y, 1);
+    newPos = new THREE.Vector3(x, y, 1);
     newPos.unproject(camera);
 
     mesh.position.copy(newPos);
   }
 }).begin();
+
+var checkbox = document.querySelector("input[name=fr]");
+checkbox.addEventListener('change', function(){
+  if(this.checked){
+    webgazer.resume();
+  }
+  else{
+    webgazer.pause();
+  }
+});
 
 document.addEventListener("mousedown", (event) =>{
   rotating = true;
@@ -152,12 +170,9 @@ function init(){
   geometry.setAttribute('normal', geometry.attributes.normal);
 
   // create material with shaders in index.html
-
   const shaderMaterial = new THREE.RawShaderMaterial({
     glslVersion: THREE.GLSL3,
-    uniforms:{
-      time: {value: 1.0}
-    },
+    uniforms: uniforms,
     vertexShader: document.getElementById('vertexShader').textContent,
     fragmentShader: document.getElementById('fragmentShader').textContent,
   });
@@ -190,6 +205,8 @@ function init(){
 }
 
 function animate(){
+  uniforms.eyeCoord.value.set(new THREE.Vector3(500,500,0));
+
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }

@@ -4,12 +4,17 @@ import * as THREE from 'three';
 export function createScene(){
     let scene = new THREE.Scene();
     scene.background = new THREE.Color( 0xf0f0f0 );
-    const ambientLight = new THREE.AmbientLight( 0xffffff, 0.4 );
+    const ambientLight = new THREE.AmbientLight( 0x404040 );
     scene.add( ambientLight );
 
-    const dirLight = new THREE.DirectionalLight( 0xefefff, 1.5 );
+    const dirLight = new THREE.DirectionalLight( 0xefefff, 3 );
     dirLight.position.set( 10, 10, 10 );
     scene.add( dirLight );
+
+    const dirLight2 = new THREE.DirectionalLight( 0xefefff, 3 );
+    dirLight2.position.set( 5, 10, 10 );
+    
+    scene.add(dirLight2);
 
     return scene;
 }

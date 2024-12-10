@@ -56,7 +56,7 @@ document.addEventListener("mouseup", (event) =>{
   rotating = false;
 });
 
-function getRotation( theta, axis){
+function getRotation(theta, axis){
   // row major
   const cosTheta = Math.cos(theta);
     const sinTheta = Math.sin(theta);
@@ -89,59 +89,54 @@ function getRotation( theta, axis){
 
 document.addEventListener("mousemove", (event) =>{
   if(rotating){
-    const deltaX = event.offsetX - prevMouse.x;
-    const deltaY = event.offsetY - prevMouse.y;
-    prevMouse = new THREE.Vector3(deltaX, deltaY);
+    const deltaX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+    const deltaY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
-    let theta = deltaX / window.innerWidth * Math.PI / 2;
-    camera.rotation.y = theta;
-
-    theta = deltaY / window.innerWidth * Math.PI / 2;
-    camera.rotation.x = theta;
-
-    camera.updateProjectionMatrix();
+    // Update camera rotation
+    camera.rotation.y -= deltaX * 0.005; 
+    camera.rotation.x -= deltaY * 0.005; 
   }
 });
 
 document.addEventListener('keydown', (event) => {
-  let cameraMovement = new THREE.Vector3(0,0,0);
+  const speed = 3; // Speed multiplier (adjust this value for faster or slower movement)
+  let cameraMovement = new THREE.Vector3(0, 0, 0);
 
-  if(event.key === 'w'){
+  if (event.key === 'w') {
     const lookVector = new THREE.Vector3();
     camera.getWorldDirection(lookVector);
-    cameraMovement.add(lookVector);
+    cameraMovement.add(lookVector.multiplyScalar(speed));
   }
-  if(event.key === 's'){
+  if (event.key === 's') {
     const lookVector = new THREE.Vector3();
     camera.getWorldDirection(lookVector);
-    cameraMovement.sub(lookVector);
+    cameraMovement.sub(lookVector.multiplyScalar(speed));
   }
-  if(event.key === 'a'){
+  if (event.key === 'a') {
     const lookVector = new THREE.Vector3();
     camera.getWorldDirection(lookVector);
     lookVector.cross(camera.up);
-    cameraMovement.sub(lookVector);
+    cameraMovement.sub(lookVector.normalize().multiplyScalar(speed));
   }
-  if(event.key === 'd'){
+  if (event.key === 'd') {
     const lookVector = new THREE.Vector3();
     camera.getWorldDirection(lookVector);
-    lookVector.cross(camera.up);
-    cameraMovement.add(lookVector);
+    lookVector.cross(camera.up); 
+    cameraMovement.add(lookVector.normalize().multiplyScalar(speed));
   }
-  if(event.ctrlKey){
-    cameraMovement.add(new THREE.Vector3(0,-1,0));
+  if (event.ctrlKey) {
+    cameraMovement.add(new THREE.Vector3(0, -1, 0).multiplyScalar(speed));
   }
-  if(event.key === ' '){
-    cameraMovement.add(new THREE.Vector3(0,1,0));
+  if (event.key === ' ') {
+    cameraMovement.add(new THREE.Vector3(0, 1, 0).multiplyScalar(speed));
   }
 
-  // add movement to camera position
-  const newPosition = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
+  // Add movement to the camera's position
+  const newPosition = new THREE.Vector3().copy(camera.position);
   newPosition.add(cameraMovement);
   camera.position.set(newPosition.x, newPosition.y, newPosition.z);
-  camera.updateProjectionMatrix();
-
 });
+
 
 window.addEventListener('resize', onWindowResize, false);
 

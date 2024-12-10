@@ -108,20 +108,19 @@
   </script>
 
   <script id="screenVertexShader" type="x-shader/x-fragment">
-    out vec2 vUv;
+    out vec2 v_uv;
     void main() {
-      vUv = uv;
-      gl_Position = vec4(position, 1.0);
+      v_uv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
   </script>
 
   <script id="screenFragmentShader" type="x-shader/x-fragment">
-    uniform sampler2D innerTexture;
-    in vec2 vUv    
+    in vec2 v_uv;
+    uniform sampler2D innerTexture;  
 
     void main() {
-      vec4 color = texture2D(innerTexture, vUv);
-      gl_FragColor = color;
+      gl_FragColor = texture2D(innerTexture, v_uv);
     }
   </script>
   

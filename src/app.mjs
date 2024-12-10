@@ -28,7 +28,8 @@ let screen, screenCamera;
 const uniforms = {
   time: {value: 1.0},
   windowSize: {value: new THREE.Vector2(window.innerWidth, window.innerHeight)},
-  eyeCoord: {value: eyeCoord}
+  eyeCoord: {value: eyeCoord},
+  innerTexture: {value: innerResTarget.texture},
 };
 
 webgazer.begin();
@@ -208,10 +209,10 @@ function init(){
       model.rotateY(180);
       model.scale.set(20,20,20);
 
-      /*// update materials
+      // update materials
       model.traverse((o) => {
         if (o.isMesh) o.material = shaderMaterial;
-      });*/
+      });
 
       scene.add(model);
     },
@@ -224,19 +225,18 @@ function init(){
   screen = new THREE.Scene();
   screen.background = new THREE.Color( 0xf0f0f0 );
   const planeGeometry = new THREE.PlaneGeometry(2, 2);
-  const planeMaterial = new THREE.MeshBasicMaterial({ map: innerResTarget.texture });
-  const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-  screen.add(plane);
-  /*const screenMaterial = new THREE.ShaderMaterial({
-    uniforms:{
-      innerTexture: {value: innerResTarget.texture},
-    },
+
+  const screenMaterial = new THREE.ShaderMaterial({
+    uniforms: uniforms,
     vertexShader: document.getElementById('screenVertexShader').textContent,
     fragmentShader: document.getElementById('screenFragmentShader').textContent,
   });
-  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2,2), screenMaterial);
-  screen.add(quad);*/
 
+  const planeMaterial = new THREE.MeshBasicMaterial({ map: innerResTarget.texture });
+  
+  const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+  screen.add(plane);
+  
   screenCamera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
 }
 
@@ -251,6 +251,8 @@ function render(){
 
   renderer.setRenderTarget(innerResTarget);
   renderer.render(scene, camera);
+
+  uniforms.innerTexture.value = innerResTarget.texture;
 
   renderer.setRenderTarget(null);
   renderer.render(screen, screenCamera);

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 
+// function to create a basic scene with lighting
 export function createScene(){
     let scene = new THREE.Scene();
     scene.background = new THREE.Color( 0xf0f0f0 );
@@ -13,6 +14,7 @@ export function createScene(){
     return scene;
 }
 
+// function to create a basic perspective camera and set the position reasonably
 export function createCamera(){
     let camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 500 );
 	camera.position.set( 0, 2, 18 );
@@ -20,3 +22,4 @@ export function createCamera(){
 
     return camera;
 }
+

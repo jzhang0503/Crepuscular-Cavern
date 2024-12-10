@@ -2,8 +2,6 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createScene, createCamera } from './components.mjs';
 
-
-
 // variables for three.js
 let renderer, scene, camera, controls;
 let mesh;
@@ -12,7 +10,7 @@ let prevMouse = new THREE.Vector3(window.innerWidth / 2, window.innerHeight / 2)
 
 // variables for foveated rendering
 let eyeCoord = new THREE.Vector2(0,0);
-  // fbo with max resolution
+// fbo with max resolution
 const innerResTarget= new THREE.WebGLRenderTarget(
   window.innerWidth * window.devicePixelRatio,
   window.innerHeight * window.devicePixelRatio,
@@ -23,8 +21,10 @@ const innerResTarget= new THREE.WebGLRenderTarget(
   }
 );
 
+// scene and camera for fbo rendering
 let screen, screenCamera;
 
+// keep track of uniforms that may need to be updated in render loop
 const uniforms = {
   time: {value: 1.0},
   windowSize: {value: new THREE.Vector2(window.innerWidth, window.innerHeight)},
@@ -32,8 +32,9 @@ const uniforms = {
   innerTexture: {value: innerResTarget.texture},
 };
 
-webgazer.begin();
+// event listeners
 
+// update eye tracking data every frame
 webgazer.setGazeListener(function(data, elapsedTime) {
 	if (data == null) {
 		return;
@@ -53,6 +54,7 @@ webgazer.setGazeListener(function(data, elapsedTime) {
   }
 }).begin();
 
+// pause/start eye tracking when checkbox changes
 var checkbox = document.querySelector("input[name=fr]");
 checkbox.addEventListener('change', function(){
   if(this.checked){
@@ -63,60 +65,35 @@ checkbox.addEventListener('change', function(){
   }
 });
 
+// track mouse movement for rotation when mouse is down
 document.addEventListener("mousedown", (event) =>{
   rotating = true;
   prevMouse = new THREE.Vector2(event.offsetX, event.offsetY);
 });
+
+// stop tracking mouse movement for rotation when mouse is up
 document.addEventListener("mouseup", (event) =>{
   rotating = false;
 });
 
-function getRotation( theta, axis){
-  // row major
-  const cosTheta = Math.cos(theta);
-    const sinTheta = Math.sin(theta);
-
-    const x = axis[0], y = axis[1], z = axis[2];
-
-    // Compute matrix elements
-    const m11 = cosTheta + Math.pow(x, 2) * (1 - cosTheta);
-    const m12 = x * y * (1 - cosTheta) + z * sinTheta;
-    const m13 = x * z * (1 - cosTheta) - y * sinTheta;
-
-    const m21 = x * y * (1 - cosTheta) - z * sinTheta;
-    const m22 = cosTheta + Math.pow(y, 2) * (1 - cosTheta);
-    const m23 = y * z * (1 - cosTheta) + x * sinTheta;
-
-    const m31 = x * z * (1 - cosTheta) + y * sinTheta;
-    const m32 = y * z * (1 - cosTheta) - x * sinTheta;
-    const m33 = cosTheta + Math.pow(z, 2) * (1 - cosTheta);
-
-    // Create the matrix and set its elements
-    const matrix = new THREE.Matrix3();
-    matrix.set(
-        m11, m12, m13,
-        m21, m22, m23,
-        m31, m32, m33
-    );
-
-    return matrix;
-  }
-
+// rotate the camera when the mouse moves
 document.addEventListener("mousemove", (event) =>{
   if(rotating){
     const deltaX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
     const deltaY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
-    // Update camera rotation
-    camera.rotation.y -= deltaX * 0.005; // Horizontal movement
-    camera.rotation.x -= deltaY * 0.005; // Vertical movement
+    // update camera rotation
+    camera.rotation.y -= deltaX * 0.005; 
+    camera.rotation.x -= deltaY * 0.005; 
   }
 });
 
+// move the camera when translation keys (wasd, ctrl, space) are down
 document.addEventListener('keydown', (event) => {
   const speed = 3; 
   let cameraMovement = new THREE.Vector3(0, 0, 0);
 
+  // check all keys being used
   if (event.key === 'w') {
     const lookVector = new THREE.Vector3();
     camera.getWorldDirection(lookVector);
@@ -146,15 +123,14 @@ document.addEventListener('keydown', (event) => {
     cameraMovement.add(new THREE.Vector3(0, 1, 0).multiplyScalar(speed));
   }
 
-  // Add movement to the camera's position
+  // add movement to the camera's position
   const newPosition = new THREE.Vector3().copy(camera.position);
   newPosition.add(cameraMovement);
   camera.position.set(newPosition.x, newPosition.y, newPosition.z);
 });
 
-
+// update renderer and camera size when the window is resized
 window.addEventListener('resize', onWindowResize, false);
-
 function onWindowResize(){
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
@@ -162,6 +138,10 @@ function onWindowResize(){
   renderer.setSize(window.innerWidth , window.innerHeight);
 }
 
+// start eye tracking
+webgazer.begin();
+
+// set up scenes
 init();
 
 function init(){
@@ -206,13 +186,16 @@ function init(){
     'src/models/CaveVersion2.glb',
     async function( gltf ){
       const model = gltf.scene;
+      // rotate and scale to whatever looks good
       model.rotateY(180);
       model.scale.set(20,20,20);
 
-      // update materials
+      /*
+      // update materials if using custom shader
       model.traverse((o) => {
         if (o.isMesh) o.material = shaderMaterial;
       });
+      */
 
       scene.add(model);
     },
@@ -224,24 +207,24 @@ function init(){
   // set up postprocessing for foveation
   screen = new THREE.Scene();
   screen.background = new THREE.Color( 0xf0f0f0 );
-  const planeGeometry = new THREE.PlaneGeometry(2, 2);
 
+  // use custom shader to get texture coordinates
   const screenMaterial = new THREE.ShaderMaterial({
     uniforms: uniforms,
     vertexShader: document.getElementById('screenVertexShader').textContent,
     fragmentShader: document.getElementById('screenFragmentShader').textContent,
   });
 
-  const planeMaterial = new THREE.MeshBasicMaterial({ map: innerResTarget.texture });
-  
-  const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+  // project texture on to plane positioned like a screen
+  const planeGeometry = new THREE.PlaneGeometry(2, 2);
+  const plane = new THREE.Mesh(planeGeometry, screenMaterial);
   screen.add(plane);
   
+  // set up camera in front of screen
   screenCamera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
 }
 
 function animate(){
-  
   requestAnimationFrame(animate);
   render();
 }

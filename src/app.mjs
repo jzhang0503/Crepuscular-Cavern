@@ -10,13 +10,13 @@ let mesh;
 let rotating = false;
 let prevMouse = new THREE.Vector3(window.innerWidth / 2, window.innerHeight / 2);
 
-let newPos = new THREE.Vector3(0,0,0);
+let eyeCoord = new THREE.Vector2(0,0);
 
 const uniforms = {
   time: {value: 1.0},
   windowSize: {value: new THREE.Vector2(innerWidth, innerHeight)},
-  eyeCoord: {value: new THREE.Vector2(400,400)}
-}
+  eyeCoord: {value: eyeCoord}
+};
 
 
 webgazer.begin();
@@ -31,7 +31,10 @@ webgazer.setGazeListener(function(data, elapsedTime) {
     const x = (data.x / window.innerWidth) * 2 - 1;
     const y = -(data.y / window.innerHeight) * 2 + 1;
 
-    newPos = new THREE.Vector3(x, y, 1);
+    eyeCoord = new THREE.Vector2(data.x, window.innerHeight - data.y);
+    console.log(eyeCoord.y);
+
+    const newPos = new THREE.Vector3(x, y, 1);
     newPos.unproject(camera);
 
     mesh.position.copy(newPos);
@@ -146,12 +149,10 @@ document.addEventListener('keydown', (event) => {
 window.addEventListener('resize', onWindowResize, false);
 
 function onWindowResize(){
-  if(camera != null){
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
 
-    renderer.setSize(window.innerWidth , window.innerHeight);
-  }
+  renderer.setSize(window.innerWidth , window.innerHeight);
 }
 
 init();
@@ -200,12 +201,12 @@ function init(){
       const model = gltf.scene;
       model.rotateY(180);
       model.scale.set(10,10,10);
-
+/*
       // update materials
       model.traverse((o) => {
         if (o.isMesh) o.material = shaderMaterial;
       });
-
+*/
       scene.add(model);
     },
     function(error){
@@ -222,8 +223,7 @@ function animate(){
 }
 
 function render(){
-  console.log(newPos);
-  uniforms.eyeCoord.value = new THREE.Vector2(newPos.x,newPos.y);
+  uniforms.eyeCoord.value = eyeCoord;
 
   renderer.render(scene, camera);
 }

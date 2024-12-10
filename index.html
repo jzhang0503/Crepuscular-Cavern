@@ -83,12 +83,10 @@
     void main() {     
       vec4 coord = gl_FragCoord;
 
-      vec2 eye = vec2(eyeCoord.x, eyeCoord.y);
+      vec2 eye = vec2(900.f, 200.f);
       vec2 pixel = vec2(coord.x, coord.y);
 
-      float distance = distance(eye, pixel);
-
-
+      float distance = distance(eyeCoord, pixel);
 
       if(distance >= 50.f){
         float pixelIndex = (coord.y - 0.5f) * windowSize.x + (coord.x - 0.5f);

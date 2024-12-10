@@ -50,6 +50,7 @@
 </script>
 
 
+
 <script id="vertexShader" type="x-shader/x-vertex">
     precision mediump float;
     precision mediump int;
@@ -78,7 +79,7 @@
     uniform vec2 windowSize;
     uniform vec2 eyeCoord;
 
-    out vec4 fragColor;
+    layout(location = 0) out vec4 pc_FragColor;
   
     void main() {     
       vec4 coord = gl_FragCoord;
@@ -92,17 +93,35 @@
         float pixelIndex = (coord.y - 0.5f) * windowSize.x + (coord.x - 0.5f);
 
         if((pixelIndex / 2.f) - floor(pixelIndex / 2.f) != 0.f){
-          fragColor = vec4(1,1,1,1);
+          pc_FragColor = vec4(1,1,1,1);
         }
         else{
-          fragColor = vColor;
+          pc_FragColor = vColor;
         }
       }
 
       if(distance <= 50.f){
-        fragColor = vColor;
+        pc_FragColor = vColor;
       }
       
+    }
+  </script>
+
+  <script id="screenVertexShader" type="x-shader/x-fragment">
+    out vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = vec4(position, 1.0);
+    }
+  </script>
+
+  <script id="screenFragmentShader" type="x-shader/x-fragment">
+    uniform sampler2D innerTexture;
+    in vec2 vUv    
+
+    void main() {
+      vec4 color = texture2D(innerTexture, vUv);
+      gl_FragColor = color;
     }
   </script>
   

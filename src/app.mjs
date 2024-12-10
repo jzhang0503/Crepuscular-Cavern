@@ -10,14 +10,26 @@ let mesh;
 let rotating = false;
 let prevMouse = new THREE.Vector3(window.innerWidth / 2, window.innerHeight / 2);
 
+// variables for foveated rendering
 let eyeCoord = new THREE.Vector2(0,0);
+  // fbo with max resolution
+const innerResTarget= new THREE.WebGLRenderTarget(
+  window.innerWidth * window.devicePixelRatio,
+  window.innerHeight * window.devicePixelRatio,
+  {
+    count: 1,
+    minFilter: THREE.NearestFilter,
+    magFilter: THREE.NearestFilter
+  }
+);
+
+let screen, screenCamera;
 
 const uniforms = {
   time: {value: 1.0},
   windowSize: {value: new THREE.Vector2(window.innerWidth, window.innerHeight)},
   eyeCoord: {value: eyeCoord}
 };
-
 
 webgazer.begin();
 
@@ -31,14 +43,12 @@ webgazer.setGazeListener(function(data, elapsedTime) {
     const x = (data.x / window.innerWidth) * 2 - 1;
     const y = -(data.y / window.innerHeight) * 2 + 1;
 
-    eyeCoord = new THREE.Vector2(data.x, window.innerHeight - data.y);
+    eyeCoord = new THREE.Vector2(data.x * devicePixelRatio, (window.innerHeight - data.y) * devicePixelRatio);
 
     const newPos = new THREE.Vector3(x, y, 1);
     newPos.unproject(camera);
 
-    mesh.position.copy(newPos);
-
-    
+    mesh.position.copy(newPos);    
   }
 }).begin();
 
@@ -157,6 +167,7 @@ function init(){
   // set up renderer
   const root = document.getElementById("app");
   renderer = new THREE.WebGLRenderer();
+  renderer.setPixelRatio(devicePixelRatio);
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	renderer.setAnimationLoop( animate );
 	root.appendChild( renderer.domElement );
@@ -197,10 +208,10 @@ function init(){
       model.rotateY(180);
       model.scale.set(20,20,20);
 
-      // update materials
+      /*// update materials
       model.traverse((o) => {
         if (o.isMesh) o.material = shaderMaterial;
-      });
+      });*/
 
       scene.add(model);
     },
@@ -208,6 +219,25 @@ function init(){
       console.error(error);
     }
   )
+
+  // set up postprocessing for foveation
+  screen = new THREE.Scene();
+  screen.background = new THREE.Color( 0xf0f0f0 );
+  const planeGeometry = new THREE.PlaneGeometry(2, 2);
+  const planeMaterial = new THREE.MeshBasicMaterial({ map: innerResTarget.texture });
+  const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+  screen.add(plane);
+  /*const screenMaterial = new THREE.ShaderMaterial({
+    uniforms:{
+      innerTexture: {value: innerResTarget.texture},
+    },
+    vertexShader: document.getElementById('screenVertexShader').textContent,
+    fragmentShader: document.getElementById('screenFragmentShader').textContent,
+  });
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2,2), screenMaterial);
+  screen.add(quad);*/
+
+  screenCamera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
 }
 
 function animate(){
@@ -219,6 +249,10 @@ function animate(){
 function render(){
   uniforms.eyeCoord.value = eyeCoord;
 
+  renderer.setRenderTarget(innerResTarget);
   renderer.render(scene, camera);
+
+  renderer.setRenderTarget(null);
+  renderer.render(screen, screenCamera);
 }
 

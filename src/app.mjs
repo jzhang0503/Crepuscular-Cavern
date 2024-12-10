@@ -143,6 +143,17 @@ document.addEventListener('keydown', (event) => {
 
 });
 
+window.addEventListener('resize', onWindowResize, false);
+
+function onWindowResize(){
+  if(camera != null){
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(window.innerWidth , window.innerHeight);
+  }
+}
+
 init();
 
 function init(){
@@ -211,6 +222,7 @@ function animate(){
 }
 
 function render(){
+  console.log(newPos);
   uniforms.eyeCoord.value = new THREE.Vector2(newPos.x,newPos.y);
 
   renderer.render(scene, camera);

@@ -76,21 +76,33 @@
     in vec4 vColor;
 
     uniform vec2 windowSize;
-    uniform vec3 eyeCoord;
+    uniform vec2 eyeCoord;
 
     out vec4 fragColor;
   
     void main() {     
       vec4 coord = gl_FragCoord;
 
-      vec2 eye = vec2(0.5f, 0.5f);
+      vec2 eye = vec2(eyeCoord.x, eyeCoord.y);
       vec2 pixel = vec2(coord.x, coord.y);
 
       float distance = distance(eye, pixel);
 
 
-      if(distance >= 500.f){
-        fragColor = vec4(0,0,1,1);
+
+      if(distance >= 50.f){
+        float pixelIndex = (coord.y - 0.5f) * windowSize.x + (coord.x - 0.5f);
+
+        if((pixelIndex / 2.f) - floor(pixelIndex / 2.f) != 0.f){
+          fragColor = vec4(1,1,1,1);
+        }
+        else{
+          fragColor = vColor;
+        }
+      }
+
+      if(distance <= 50.f){
+        fragColor = vColor;
       }
       
     }

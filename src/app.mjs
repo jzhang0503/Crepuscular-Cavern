@@ -15,7 +15,7 @@ let newPos = new THREE.Vector3(0,0,0);
 const uniforms = {
   time: {value: 1.0},
   windowSize: {value: new THREE.Vector2(innerWidth, innerHeight)},
-  eyeCoord: {value: newPos}
+  eyeCoord: {value: new THREE.Vector2(400,400)}
 }
 
 
@@ -205,9 +205,14 @@ function init(){
 }
 
 function animate(){
-  uniforms.eyeCoord.value.set(new THREE.Vector3(500,500,0));
+  
+  requestAnimationFrame(animate);
+  render();
+}
+
+function render(){
+  uniforms.eyeCoord.value = new THREE.Vector2(newPos.x,newPos.y);
 
   renderer.render(scene, camera);
-  requestAnimationFrame(animate);
 }
 

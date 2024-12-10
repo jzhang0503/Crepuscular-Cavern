@@ -10,10 +10,30 @@ let prevMouse = new THREE.Vector3(window.innerWidth / 2, window.innerHeight / 2)
 
 // variables for foveated rendering
 let eyeCoord = new THREE.Vector2(0,0);
-// fbo with max resolution
+// fbo with full resolution
 const innerResTarget= new THREE.WebGLRenderTarget(
   window.innerWidth * window.devicePixelRatio,
   window.innerHeight * window.devicePixelRatio,
+  {
+    count: 1,
+    minFilter: THREE.NearestFilter,
+    magFilter: THREE.NearestFilter
+  }
+);
+// fbo with resolution / 2
+const medResTarget= new THREE.WebGLRenderTarget(
+  window.innerWidth * window.devicePixelRatio / 2.0,
+  window.innerHeight * window.devicePixelRatio / 2.0,
+  {
+    count: 1,
+    minFilter: THREE.NearestFilter,
+    magFilter: THREE.NearestFilter
+  }
+);
+// fbo with resolution / 4
+const outerResTarget= new THREE.WebGLRenderTarget(
+  window.innerWidth * window.devicePixelRatio / 4.0,
+  window.innerHeight * window.devicePixelRatio / 4.0,
   {
     count: 1,
     minFilter: THREE.NearestFilter,
@@ -29,6 +49,8 @@ const uniforms = {
   windowSize: {value: new THREE.Vector2(window.innerWidth, window.innerHeight)},
   eyeCoord: {value: eyeCoord},
   innerTexture: {value: innerResTarget.texture},
+  medTexture: {value: medResTarget.texture},
+  outerTexture: {value: outerResTarget.texture},
   foveate: {value: true},
   fill: {value: false},
   innerRadius: {value: 50},
@@ -255,12 +277,28 @@ function animate(){
 function render(){
   uniforms.eyeCoord.value = eyeCoord;
 
-  renderer.setRenderTarget(innerResTarget);
-  renderer.render(scene, camera);
+  if(uniforms.foveate.value){
+    renderer.setRenderTarget(innerResTarget);
+    renderer.render(scene, camera);
+    renderer.setRenderTarget(medResTarget);
+    renderer.render(scene, camera);
+    renderer.setRenderTarget(outerResTarget);
+    renderer.render(scene, camera);
+  
+    uniforms.innerTexture.value = innerResTarget.texture;
+    uniforms.medTexture.value = medResTarget.texture;
+    uniforms.outerTexture.value = outerResTarget.texture;
+  
+    renderer.setRenderTarget(null);
+    renderer.render(screen, screenCamera);
+  }
+  else{
+    renderer.setRenderTarget(innerResTarget);
+    renderer.render(scene, camera);
 
-  uniforms.innerTexture.value = innerResTarget.texture;
-
-  renderer.setRenderTarget(null);
-  renderer.render(screen, screenCamera);
+    renderer.setRenderTarget(null);
+    renderer.render(screen, screenCamera);
+  }
+  
 }
 

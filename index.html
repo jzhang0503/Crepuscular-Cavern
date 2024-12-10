@@ -129,7 +129,11 @@
   <script id="screenFragmentShader" type="x-shader/x-fragment">
     in vec2 v_uv;
 
+    // samplers for varying resolution levels
     uniform sampler2D innerTexture;
+    uniform sampler2D medTexture;
+    uniform sampler2D outerTexture;
+
     uniform vec2 windowSize;
     uniform vec2 eyeCoord; 
     uniform bool foveate;
@@ -141,33 +145,36 @@
 
       if(foveate){
         vec2 pixel = gl_FragCoord.xy;
+        vec4 green = vec4(0,1,0,1);
         vec4 black = vec4(0,0,0,1);
 
         float distance = distance(eyeCoord, pixel);
+        float pixelIndex = (pixel.y - 0.5f) * windowSize.x + (pixel.x - 0.5f);
 
         // sample every four pixels outside outer radius
         if(distance >= outerRadius){
-          float pixelIndex = (pixel.y - 0.5f) * windowSize.x + (pixel.x - 0.5f);
-
-          if((pixelIndex / 4.f) - floor(pixelIndex / 4.f) != 0.f){
-            gl_FragColor = black;
+          if(fill || (pixelIndex / 4.f) - floor(pixelIndex / 4.f) == 0.f){
+            gl_FragColor = texture2D(outerTexture, v_uv);
           }
           else{
-            gl_FragColor = texture2D(innerTexture, v_uv);
+            gl_FragColor = black;
           }
         }
         // sample every two pixels outside inner radius
         else if(distance >= innerRadius){
-          float pixelIndex = (pixel.y - 0.5f) * windowSize.x + (pixel.x - 0.5f);
-
-          if((pixelIndex / 2.f) - floor(pixelIndex / 2.f) != 0.f){
-            gl_FragColor = black;
+          if(fill || (pixelIndex / 2.f) - floor(pixelIndex / 2.f) == 0.f){
+            gl_FragColor = texture2D(outerTexture, v_uv);
           }
           else{
-            gl_FragColor = texture2D(innerTexture, v_uv);
+            gl_FragColor = black;
           }
         }
-        else if(distance < innerRadius){
+        // make a green dot where the current gaze point is
+        else if(distance < 20.0){
+          gl_FragColor = green;
+        }
+        // sample every pixel inside the inner radius
+        else{
           gl_FragColor = texture2D(innerTexture, v_uv);
         }
       }

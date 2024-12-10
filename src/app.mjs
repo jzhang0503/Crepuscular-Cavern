@@ -20,7 +20,6 @@ const innerResTarget= new THREE.WebGLRenderTarget(
     magFilter: THREE.NearestFilter
   }
 );
-
 // scene and camera for fbo rendering
 let screen, screenCamera;
 
@@ -30,6 +29,10 @@ const uniforms = {
   windowSize: {value: new THREE.Vector2(window.innerWidth, window.innerHeight)},
   eyeCoord: {value: eyeCoord},
   innerTexture: {value: innerResTarget.texture},
+  foveate: {value: true},
+  fill: {value: false},
+  innerRadius: {value: 50},
+  outerRadius: {value: 50},
 };
 
 // event listeners
@@ -59,11 +62,31 @@ var checkbox = document.querySelector("input[name=fr]");
 checkbox.addEventListener('change', function(){
   if(this.checked){
     webgazer.resume();
+    uniforms.foveate.value = true;
   }
   else{
     webgazer.pause();
+    uniforms.foveate.value = false;
   }
 });
+
+// fill pixels
+var fillCheckbox = document.querySelector("input[name=fr-1]");
+fillCheckbox.addEventListener('change', function(){
+  uniforms.fill.value = this.checked;
+});
+
+// adjust foveation radii
+document.getElementById("innerRadius").oninput = function() {
+  var value = document.getElementById("innerRadius").value;
+  document.getElementById("innerRadiusVal").innerHTML = value;
+  uniforms.innerRadius.value = value;
+};
+document.getElementById("outerRadius").oninput = function() {
+  var value = document.getElementById("outerRadius").value;
+  document.getElementById("outerRadiusVal").innerHTML = value;
+  uniforms.outerRadius.value = value;
+};
 
 // track mouse movement for rotation when mouse is down
 document.addEventListener("mousedown", (event) =>{

@@ -10,22 +10,33 @@
   </head>
 
   <body>
-
-    <div> 
-      <div id="controls">
-        <input type="checkbox" id="fr" name="fr" checked />
-        <label for="fr">Foveated Rendering</label>
-
-        <div id="fr-1">
-          <input type="checkbox" id="fr-1" name="fr-1"/>
-          <label for="fr-1">Fill Pixels</label>
-        </div>
-      </div>
-      
-    </div>
     <div id="app">
       <script type='module' src='src/app.mjs'></script>
       <script src="src/webgazer.js" type="text/javascript"></script>
+    </div>
+
+    <div id="controls">
+      <h3>Crepuscular Cavern</h3>
+
+      <input type="checkbox" id="fr" name="fr" checked />
+      <label for="fr">Foveated Rendering</label>
+
+      <div id="fr-1">
+        <input type="checkbox" id="fr-1" name="fr-1"/>
+        <label for="fr-1">Fill Pixels</label>
+
+        <div>
+          <div>Inner Foveation Radius</div>
+          <input type="range" id="innerRadius" min="50" max="500" value="50" class="slider">
+          <output id="innerRadiusVal">50</output>
+        </div>
+        <div>
+          <div>Outer Foveation Radius</div>
+          <input type="range" id="outerRadius" min="50" max="500" value="50" class="slider">
+          <output id="outerRadiusVal">50</output>
+        </div>
+
+      </div>
     </div>
 
     <script type="text/javascript">
@@ -120,26 +131,47 @@
 
     uniform sampler2D innerTexture;
     uniform vec2 windowSize;
-    uniform vec2 eyeCoord;  
+    uniform vec2 eyeCoord; 
+    uniform bool foveate;
+    uniform bool fill; 
+    uniform float innerRadius;
+    uniform float outerRadius;
 
     void main() {
 
-      vec2 pixel = gl_FragCoord.xy;
+      if(foveate){
+        vec2 pixel = gl_FragCoord.xy;
+        vec4 black = vec4(0,0,0,1);
 
-      float distance = distance(eyeCoord, pixel);
+        float distance = distance(eyeCoord, pixel);
 
-      if(distance >= 200.f){
-        float pixelIndex = (pixel.y - 0.5f) * windowSize.x + (pixel.x - 0.5f);
+        // sample every four pixels outside outer radius
+        if(distance >= outerRadius){
+          float pixelIndex = (pixel.y - 0.5f) * windowSize.x + (pixel.x - 0.5f);
 
-        if((pixelIndex / 2.f) - floor(pixelIndex / 2.f) != 0.f){
-          gl_FragColor = vec4(0,0,0,1);
+          if((pixelIndex / 4.f) - floor(pixelIndex / 4.f) != 0.f){
+            gl_FragColor = black;
+          }
+          else{
+            gl_FragColor = texture2D(innerTexture, v_uv);
+          }
         }
-        else{
+        // sample every two pixels outside inner radius
+        else if(distance >= innerRadius){
+          float pixelIndex = (pixel.y - 0.5f) * windowSize.x + (pixel.x - 0.5f);
+
+          if((pixelIndex / 2.f) - floor(pixelIndex / 2.f) != 0.f){
+            gl_FragColor = black;
+          }
+          else{
+            gl_FragColor = texture2D(innerTexture, v_uv);
+          }
+        }
+        else if(distance < innerRadius){
           gl_FragColor = texture2D(innerTexture, v_uv);
         }
       }
-
-      if(distance <= 200.f){
+      else{
         gl_FragColor = texture2D(innerTexture, v_uv);
       }
 

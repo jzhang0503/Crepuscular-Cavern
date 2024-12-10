@@ -14,7 +14,7 @@ let eyeCoord = new THREE.Vector2(0,0);
 
 const uniforms = {
   time: {value: 1.0},
-  windowSize: {value: new THREE.Vector2(innerWidth, innerHeight)},
+  windowSize: {value: new THREE.Vector2(window.innerWidth, window.innerHeight)},
   eyeCoord: {value: eyeCoord}
 };
 
@@ -32,12 +32,13 @@ webgazer.setGazeListener(function(data, elapsedTime) {
     const y = -(data.y / window.innerHeight) * 2 + 1;
 
     eyeCoord = new THREE.Vector2(data.x, window.innerHeight - data.y);
-    console.log(eyeCoord.y);
 
     const newPos = new THREE.Vector3(x, y, 1);
     newPos.unproject(camera);
 
     mesh.position.copy(newPos);
+
+    
   }
 }).begin();
 
@@ -156,7 +157,6 @@ function init(){
   // set up renderer
   const root = document.getElementById("app");
   renderer = new THREE.WebGLRenderer();
-  renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	renderer.setAnimationLoop( animate );
 	root.appendChild( renderer.domElement );
@@ -195,20 +195,19 @@ function init(){
     async function( gltf ){
       const model = gltf.scene;
       model.rotateY(180);
-      model.scale.set(10,10,10);
-/*
+      model.scale.set(20,20,20);
+
       // update materials
       model.traverse((o) => {
         if (o.isMesh) o.material = shaderMaterial;
       });
-*/
+
       scene.add(model);
     },
     function(error){
       console.error(error);
     }
   )
-
 }
 
 function animate(){

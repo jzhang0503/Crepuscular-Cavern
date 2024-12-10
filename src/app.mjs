@@ -10,6 +10,7 @@ let prevMouse = new THREE.Vector3(window.innerWidth / 2, window.innerHeight / 2)
 
 // variables for foveated rendering
 let eyeCoord = new THREE.Vector2(0,0);
+let mouseCoord = new THREE.Vector2(0,0);
 // fbo with full resolution
 const innerResTarget= new THREE.WebGLRenderTarget(
   window.innerWidth * window.devicePixelRatio,
@@ -52,6 +53,7 @@ const uniforms = {
   medTexture: {value: medResTarget.texture},
   outerTexture: {value: outerResTarget.texture},
   foveate: {value: true},
+  mouse: {value: false},
   fill: {value: false},
   innerRadius: {value: 50},
   outerRadius: {value: 50},
@@ -60,7 +62,7 @@ const uniforms = {
 // event listeners
 
 // update eye tracking data every frame
-webgazer.setGazeListener(function(data, elapsedTime) {
+webgazer.setGazeListener(function(data, event) {
 	if (data == null) {
 		return;
 	}
@@ -80,16 +82,21 @@ webgazer.setGazeListener(function(data, elapsedTime) {
 }).begin();
 
 // pause/start eye tracking when checkbox changes
-var checkbox = document.querySelector("input[name=fr]");
-checkbox.addEventListener('change', function(){
+var eyeCheckbox = document.querySelector("input[name=eye]");
+eyeCheckbox.addEventListener('change', function(){
+  uniforms.mouse.value = !this.checked;
   if(this.checked){
     webgazer.resume();
-    uniforms.foveate.value = true;
   }
   else{
     webgazer.pause();
-    uniforms.foveate.value = false;
   }
+});
+
+// control foveation when checkbox changes
+var checkbox = document.querySelector("input[name=fr]");
+checkbox.addEventListener('change', function(){
+  uniforms.foveate.value = this.checked;
 });
 
 // fill pixels
@@ -131,6 +138,11 @@ document.addEventListener("mousemove", (event) =>{
     camera.rotation.y -= deltaX * 0.005; 
     camera.rotation.x -= deltaY * 0.005; 
   }
+
+  if(uniforms.foveate.value && uniforms.mouse.value){
+    mouseCoord = new THREE.Vector2(event.clientX * devicePixelRatio, (window.innerHeight - event.clientY) * devicePixelRatio);
+  }
+  
 });
 
 // move the camera when translation keys (wasd, ctrl, space) are down
@@ -185,6 +197,7 @@ function onWindowResize(){
 
 // start eye tracking
 webgazer.begin();
+webgazer.showPredictionPoints(false); 
 
 // set up scenes
 init();
@@ -275,7 +288,12 @@ function animate(){
 }
 
 function render(){
-  uniforms.eyeCoord.value = eyeCoord;
+  if(uniforms.mouse.value){
+    uniforms.eyeCoord.value = mouseCoord;
+  }
+  else{
+    uniforms.eyeCoord.value = eyeCoord;
+  }
 
   if(uniforms.foveate.value){
     renderer.setRenderTarget(innerResTarget);

@@ -56,7 +56,7 @@ document.addEventListener("mouseup", (event) =>{
   rotating = false;
 });
 
-function getRotation(theta, axis){
+function getRotation( theta, axis){
   // row major
   const cosTheta = Math.cos(theta);
     const sinTheta = Math.sin(theta);
@@ -93,13 +93,13 @@ document.addEventListener("mousemove", (event) =>{
     const deltaY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
     // Update camera rotation
-    camera.rotation.y -= deltaX * 0.005; 
-    camera.rotation.x -= deltaY * 0.005; 
+    camera.rotation.y -= deltaX * 0.005; // Horizontal movement
+    camera.rotation.x -= deltaY * 0.005; // Vertical movement
   }
 });
 
 document.addEventListener('keydown', (event) => {
-  const speed = 3; // Speed multiplier (adjust this value for faster or slower movement)
+  const speed = 3; 
   let cameraMovement = new THREE.Vector3(0, 0, 0);
 
   if (event.key === 'w') {
@@ -115,7 +115,7 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'a') {
     const lookVector = new THREE.Vector3();
     camera.getWorldDirection(lookVector);
-    lookVector.cross(camera.up);
+    lookVector.cross(camera.up); 
     cameraMovement.sub(lookVector.normalize().multiplyScalar(speed));
   }
   if (event.key === 'd') {

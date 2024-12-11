@@ -185,7 +185,8 @@
 
   <script id="fragmentShader2" type="x-shader/x-fragment">
     in vec2 v_uv;
-    uniform sampler2D sunTexture;  
+    uniform sampler2D sunTexture; 
+    uniform bool sunOn; 
 
     const int NUM_SAMPLES = 100;
     const float DECAY = 0.95;
@@ -193,9 +194,10 @@
     const float WEIGHT = 0.02;
 
     void main() {
+      if (sunOn) {
       gl_FragColor = texture2D(sunTexture, v_uv);
 
-
+      
         vec2 lightPositionOnScreen = vec2(0.5f,0.5f);
         vec2 deltaTexCoord = (v_uv - lightPositionOnScreen) * DENSITY;
         vec2 texCoord = v_uv;
@@ -211,6 +213,12 @@
         }
 
         gl_FragColor = color;
+      }
+      else {
+        gl_FragColor = texture2D(sunTexture, v_uv);
+
+      }
+      
       
     }
   </script>

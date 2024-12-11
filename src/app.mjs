@@ -1,6 +1,13 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createScene, createCamera } from './components.mjs';
+
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
+
 import Stats from 'stats.js';
 
 const stats = new Stats();
@@ -9,6 +16,7 @@ document.body.appendChild(stats.dom);
 
 // variables for three.js
 let renderer, scene, camera, sunScene, controls;
+let composer, bloomPass, renderTarget, sceneWithoutBloom, sceneWithBloom;
 let mesh;
 let rotating = false;
 let prevMouse = new THREE.Vector3(window.innerWidth / 2, window.innerHeight / 2);
@@ -74,6 +82,7 @@ const uniforms = {
   innerRadius: {value: 50.0},
   outerRadius: {value: 50.0},
   sunTexture: {value: sunTarget.texture},
+  sunOn: {value: false},
 
 };
 
@@ -293,20 +302,58 @@ function init(){
   )
 
   //create the sun in a seperate scene
-  sunScene = new THREE.Scene();
-  sunScene.background = new THREE.Color( 0xf0f0f0 );
-  const sunGeometry = new THREE.SphereGeometry(20, 20, 20);
-  sunGeometry.rotateY(0.2);
+  // sunScene = new THREE.Scene();
+  // sunScene.background = new THREE.Color( 0xf0f0f0 );
+  // const sunGeometry = new THREE.SphereGeometry(20, 20, 20);
+  // sunGeometry.rotateY(0.2);
 
-  // Create the material for the sun
+  // // Create the material for the sun
+  // const sunMaterial = new THREE.MeshBasicMaterial({
+  //   color: 0xffff00, 
+  // });
+
+  // // Create the mesh for the sun and add it to the scene
+  // const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
+  // sunMesh.position.set(-15, 120, -30); // Position the sun in the scene
+  // sunScene.add(sunMesh);
+
+
+// Initialize the EffectComposer
+sceneWithBloom = new THREE.Scene();
+
+const sunGeometry = new THREE.SphereGeometry(10, 20, 20);
   const sunMaterial = new THREE.MeshBasicMaterial({
-    color: 0xffff00, 
+    color: 0xffff00,
+    // emissive: 0xffff00,
+    // emissiveIntensity: 1,
   });
-
-  // Create the mesh for the sun and add it to the scene
   const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
-  sunMesh.position.set(-15, 120, -30); // Position the sun in the scene
-  sunScene.add(sunMesh);
+  sunMesh.position.set(-15, 120, -30);
+  sceneWithBloom.add(sunMesh);
+
+  // Create the render target for post-processing
+  renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
+
+  // Set up EffectComposer
+  composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+
+  // Set up bloom effect (only applies to the scene with the sun)
+  bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    1.0,  // Strength of bloom
+    0.4,  // Bloom radius
+    0.85   // Threshold for bloom
+  );
+  composer.addPass(bloomPass);
+
+  // Optional: Add gamma correction or other post-processing effects
+  composer.addPass(new ShaderPass(GammaCorrectionShader));
+
+
+
+
+
 
   //GOD RAYS FBO
   // set up postprocessing for godrays
@@ -351,6 +398,9 @@ function init(){
 
 
 function animate(){
+  requestAnimationFrame(animate);
+  renderSun();
+  // render();
   stats.begin();
   
   render();
@@ -359,14 +409,17 @@ function animate(){
 }
 
 function renderSun() {
-  renderer.setRenderTarget(sunTarget);
-  renderer.render(sunScene, camera);
+  // renderer.setRenderTarget(sunTarget);
+  // renderer.render(sunScene, camera);
 
-  uniforms.sunTexture.value = sunTarget.texture;
+  // uniforms.sunTexture.value = sunTarget.texture;
+  // uniforms.sunOn.value = true;
 
-  renderer.setRenderTarget(null);
-  renderer.render(sunScreen, sunScreenCamera);
+  // renderer.setRenderTarget(null);
+  // renderer.render(sunScreen, sunScreenCamera);
 
+  renderer.setRenderTarget(renderTarget);
+  composer.render();
 }
 
 function render(){

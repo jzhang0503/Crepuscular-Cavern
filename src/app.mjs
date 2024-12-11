@@ -511,7 +511,12 @@ function render(){
                         coord.y - uniforms.innerRadius.value,
                         uniforms.innerRadius.value * 2,
                         uniforms.innerRadius.value * 2);
-    innerComposer.render();
+    if(uniforms.glow.value){
+      innerComposer.render();
+    }
+    else{
+      renderer.render(scene, camera);
+    }
     
 
     // render the entire screen, but only update pixels in the outer radius
@@ -522,11 +527,23 @@ function render(){
                         uniforms.outerRadius.value * 2,
                         uniforms.outerRadius.value * 2);
     medComposer.render();
+    if(uniforms.glow.value){
+      medComposer.render();
+    }
+    else{
+      renderer.render(scene, camera);
+    }
 
     // update all pixels on the screen at lowest resolution
     renderer.setScissorTest(false);
     renderer.setRenderTarget(outerResTarget);
     outerComposer.render();
+    if(uniforms.glow.value){
+      outerComposer.render();
+    }
+    else{
+      renderer.render(scene, camera);
+    }
   
     // update texture uniforms for shader
     uniforms.innerTexture.value = innerResTarget.texture;

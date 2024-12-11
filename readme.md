@@ -39,6 +39,9 @@ Crepuscular lighting is comes from sunbeams during twilight hours that are obstr
 
 We added texturing to the cave using triplanar mapping. We chose four different textures to apply to the cave and toggle on and off using the menu. Our caveVertexShader and caveFragmentShader apply triplanar mapping to the cave when a checkbox is clicked using the corresponding texture. If no checkbox is toggled the original material of the cave is stored in userData and then reapplied to the cave.
 
+Resources:
+- Three.js demo: https://www.youtube.com/watch?v=RcKy8Fi31pE
+
 # Known Bugs
 When eye tracking is enabled (Foveated Rendering is toggled on and Eyes, not Mouse are used), the app runs more slowly, sometimes below the minimum 24 fps depending on the machine. We implemented mouse controls as an alternative that seems quicker and allows more direct control to still demonstrate the technical feature.
 

@@ -19,6 +19,7 @@ document.body.appendChild(stats.dom);
 // variables for three.js
 let renderer, scene, camera, caveMesh, controls;
 let composer, bloomPass, renderTarget, sceneWithoutBloom, sceneWithBloom;
+let innerComposer, medComposer, outerComposer;
 let mesh;
 let rotating = false;
 let prevMouse = new THREE.Vector3(window.innerWidth / 2, window.innerHeight / 2);
@@ -391,9 +392,14 @@ sceneWithBloom = new THREE.Scene();
   // Create the render target for post-processing
   renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
 
-  // Set up EffectComposer
-  composer = new EffectComposer(renderer, outerResTarget);
-  composer.addPass(new RenderPass(scene, camera));
+  // Set up EffectComposers
+  innerComposer = new EffectComposer(renderer, innerResTarget);
+  medComposer = new EffectComposer(renderer, medResTarget);
+  outerComposer = new EffectComposer(renderer, outerResTarget);
+  
+  innerComposer.addPass(new RenderPass(scene, camera));
+  medComposer.addPass(new RenderPass(scene, camera));
+  outerComposer.addPass(new RenderPass(scene, camera));
 
   // Set up bloom effect (only applies to the scene with the sun)
   bloomPass = new UnrealBloomPass(
@@ -402,10 +408,15 @@ sceneWithBloom = new THREE.Scene();
     0.4,  // Bloom radius
     0.85   // Threshold for bloom
   );
-  composer.addPass(bloomPass);
+  
+  innerComposer.addPass(bloomPass);
+  medComposer.addPass(bloomPass);
+  outerComposer.addPass(bloomPass);
 
-  // Optional: Add gamma correction or other post-processing effects
-  composer.addPass(new ShaderPass(GammaCorrectionShader));
+  // Add gamma correction or other post-processing effects
+  innerComposer.addPass(new ShaderPass(GammaCorrectionShader));
+  medComposer.addPass(new ShaderPass(GammaCorrectionShader));
+  outerComposer.addPass(new ShaderPass(GammaCorrectionShader));
 
   //FOVEATION FBO
   // set up postprocessing for foveation
@@ -496,9 +507,7 @@ function render(){
                         coord.y - uniforms.innerRadius.value,
                         uniforms.innerRadius.value * 2,
                         uniforms.innerRadius.value * 2);
-    composer.renderer = renderer;
-    composer.renderTarget = innerResTarget;
-    composer.render();
+    innerComposer.render();
 
     // render the entire screen, but only update pixels in the outer radius
     renderer.setScissorTest(true);
@@ -507,16 +516,12 @@ function render(){
                         coord.y - uniforms.outerRadius.value,
                         uniforms.outerRadius.value * 2,
                         uniforms.outerRadius.value * 2);
-    composer.renderer = renderer;
-    composer.renderTarget = medResTarget;
-    composer.render();
+    medComposer.render();
 
     // update all pixels on the screen at lowest resolution
     renderer.setScissorTest(false);
     renderer.setRenderTarget(outerResTarget);
-    composer.renderer = renderer;
-    composer.renderTarget = outerResTarget;
-    composer.render();
+    outerComposer.render();
   
     // update texture uniforms for shader
     uniforms.innerTexture.value = innerResTarget.texture;

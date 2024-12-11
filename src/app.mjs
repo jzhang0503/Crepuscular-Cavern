@@ -7,6 +7,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
+import * as Lsystem from './lsystems/lsystem'
 
 import Stats from 'stats.js';
 
@@ -301,6 +302,8 @@ function init(){
     }
   )
 
+  Lsystem.basicCrystal(scene, new THREE.Vector3(0,0,0),4);
+  Lsystem.basicTree(scene, new THREE.Vector3(0,0,5),6);
   //create the sun in a seperate scene
   // sunScene = new THREE.Scene();
   // sunScene.background = new THREE.Color( 0xf0f0f0 );

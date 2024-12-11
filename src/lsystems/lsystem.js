@@ -40,17 +40,18 @@ export function drawLSystem(scene, lSystem, length, angle, position = new THREE.
     envMapIntensity: 1,
     side: THREE.DoubleSide
 })) {
+    const group = new THREE.Group();
     const stack = [];
     let direction = new THREE.Vector3(1, 0, 0);
     let quaternion = new THREE.Quaternion();
 
     for (let char of lSystem) {
         switch (char) {
-            case 'F': // Draw a shape
+            case 'F': // Draw a line
                 const box = new THREE.Mesh(geometry, gradient);
                 box.position.copy(position);
                 box.quaternion.copy(quaternion);
-                scene.add(box);
+                group.add(box);
                 position.add(direction.clone().multiplyScalar(length));
                 break;
             case '+': // Rotate clockwise
@@ -88,6 +89,8 @@ export function drawLSystem(scene, lSystem, length, angle, position = new THREE.
                 break;
         }
     }
+
+    return group;
 }
 
 /**

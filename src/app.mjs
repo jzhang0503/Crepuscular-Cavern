@@ -392,7 +392,7 @@ sceneWithBloom = new THREE.Scene();
   renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
 
   // Set up EffectComposer
-  composer = new EffectComposer(renderer);
+  composer = new EffectComposer(renderer, outerResTarget);
   composer.addPass(new RenderPass(scene, camera));
 
   // Set up bloom effect (only applies to the scene with the sun)
@@ -468,22 +468,9 @@ function addCave() {
 }
 
 function animate(){
-  if (uniforms.glow.value) {
-    renderSun();
-  }
-  else {
-  render();
   stats.begin();
-  
-  render();
-  // renderSun();
+    render();
   stats.end();
-  }
-}
-
-function renderSun() {
-  renderer.setRenderTarget(renderTarget);
-  composer.render();
 }
 
 function render(){
@@ -509,7 +496,9 @@ function render(){
                         coord.y - uniforms.innerRadius.value,
                         uniforms.innerRadius.value * 2,
                         uniforms.innerRadius.value * 2);
-    renderer.render(scene, camera);
+    composer.renderer = renderer;
+    composer.renderTarget = innerResTarget;
+    composer.render();
 
     // render the entire screen, but only update pixels in the outer radius
     renderer.setScissorTest(true);
@@ -518,12 +507,16 @@ function render(){
                         coord.y - uniforms.outerRadius.value,
                         uniforms.outerRadius.value * 2,
                         uniforms.outerRadius.value * 2);
-    renderer.render(scene, camera);
+    composer.renderer = renderer;
+    composer.renderTarget = medResTarget;
+    composer.render();
 
     // update all pixels on the screen at lowest resolution
     renderer.setScissorTest(false);
     renderer.setRenderTarget(outerResTarget);
-    renderer.render(scene, camera);
+    composer.renderer = renderer;
+    composer.renderTarget = outerResTarget;
+    composer.render();
   
     // update texture uniforms for shader
     uniforms.innerTexture.value = innerResTarget.texture;
@@ -536,13 +529,21 @@ function render(){
   }
   // only render one texture if not foveating
   else{
-    // update all pixels on the screen at highest resolution
-    renderer.setRenderTarget(innerResTarget);
-    renderer.render(scene, camera);
 
-    // render to the "screen"
-    renderer.setRenderTarget(null);
-    renderer.render(screen, screenCamera);
+    if(uniforms.glow.value){
+      renderer.setRenderTarget(renderTarget);
+      composer.render();
+    }
+    else{
+      // update all pixels on the screen at highest resolution
+      renderer.setRenderTarget(innerResTarget);
+      renderer.render(scene, camera);
+
+      // render to the "screen"
+      renderer.setRenderTarget(null);
+      renderer.render(screen, screenCamera);
+    }
+    
   }
   
 }

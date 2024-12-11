@@ -17,9 +17,10 @@ export function createScene(){
     scene.add(dirLight2);
 
     // const dirLight3 = new THREE.DirectionalLight( 0xefefff, 3 );
-    // dirLight2.position.set( -15, 120, -20 );
-    
-    // scene.add(dirLight3);
+    // dirLight.position.set( -50, 100, -50 );
+    // scene.add( dirLight3 );
+
+
 
     return scene;
 }

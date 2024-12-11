@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createScene, createCamera } from './components.mjs';
 
 // variables for three.js
-let renderer, scene, camera, controls;
+let renderer, scene, camera, sunScene, controls;
 let mesh;
 let rotating = false;
 let prevMouse = new THREE.Vector3(window.innerWidth / 2, window.innerHeight / 2);
@@ -41,8 +41,19 @@ const outerResTarget= new THREE.WebGLRenderTarget(
     magFilter: THREE.NearestFilter
   }
 );
-// scene and camera for fbo rendering
-let screen, screenCamera;
+const sunTarget= new THREE.WebGLRenderTarget(
+  window.innerWidth * window.devicePixelRatio,
+  window.innerHeight * window.devicePixelRatio,
+  {
+    count: 1,
+    minFilter: THREE.NearestFilter,
+    magFilter: THREE.NearestFilter
+  }
+);
+
+
+// // scene and camera for fbo rendering
+let screen, screenCamera, sunScreen ,sunScreenCamera;
 
 // keep track of uniforms that may need to be updated in render loop
 const uniforms = {
@@ -57,6 +68,8 @@ const uniforms = {
   fill: {value: false},
   innerRadius: {value: 50},
   outerRadius: {value: 50},
+  sunTexture: {value: sunTarget.texture},
+
 };
 
 // event listeners
@@ -262,6 +275,43 @@ function init(){
     }
   )
 
+  //create the sun in a seperate scene
+  sunScene = new THREE.Scene();
+  sunScene.background = new THREE.Color( 0xf0f0f0 );
+  const sunGeometry = new THREE.SphereGeometry(20, 20, 20);
+  sunGeometry.rotateY(0.2);
+
+  // Create the material for the sun
+  const sunMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffff00, 
+  });
+
+  // Create the mesh for the sun and add it to the scene
+  const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
+  sunMesh.position.set(-15, 120, -30); // Position the sun in the scene
+  sunScene.add(sunMesh);
+
+  //GOD RAYS FBO
+  // set up postprocessing for godrays
+  sunScreen = new THREE.Scene();
+  sunScreen.background = new THREE.Color( 0xf0f0f0 );
+
+  // use custom shader to get texture coordinates
+  const sunScreenMaterial = new THREE.ShaderMaterial({
+    uniforms: uniforms,
+    vertexShader: document.getElementById('vertexShader2').textContent,
+    fragmentShader: document.getElementById('fragmentShader2').textContent,
+  });
+
+  // project texture on to plane positioned like a screen
+  const sunPlaneGeometry = new THREE.PlaneGeometry(2, 2);
+  const sunPlane = new THREE.Mesh(sunPlaneGeometry, sunScreenMaterial);
+  sunScreen.add(sunPlane);
+  
+  // set up camera in front of screen
+  sunScreenCamera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+
+  //FOVEATION FBO
   // set up postprocessing for foveation
   screen = new THREE.Scene();
   screen.background = new THREE.Color( 0xf0f0f0 );
@@ -277,7 +327,7 @@ function init(){
   const planeGeometry = new THREE.PlaneGeometry(2, 2);
   const plane = new THREE.Mesh(planeGeometry, screenMaterial);
   screen.add(plane);
-  
+
   // set up camera in front of screen
   screenCamera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
 }
@@ -285,6 +335,18 @@ function init(){
 function animate(){
   requestAnimationFrame(animate);
   render();
+  // renderSun();
+}
+
+function renderSun() {
+  renderer.setRenderTarget(sunTarget);
+  renderer.render(sunScene, camera);
+
+  uniforms.sunTexture.value = sunTarget.texture;
+
+  renderer.setRenderTarget(null);
+  renderer.render(sunScreen, sunScreenCamera);
+
 }
 
 function render(){
@@ -319,4 +381,11 @@ function render(){
   }
   
 }
+
+
+
+
+
+
+
 

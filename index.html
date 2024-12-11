@@ -195,5 +195,68 @@
     }
   </script>
   
- 
+  <script id="vertexShader2" type="x-shader/x-fragment">
+    out vec2 v_uv;
+    void main() {
+      v_uv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  </script>
+
+  <script id="fragmentShader2" type="x-shader/x-fragment">
+    in vec2 v_uv;
+    uniform sampler2D sunTexture;  
+
+    const int NUM_SAMPLES = 100;
+    const float DECAY = 0.95;
+    const float DENSITY = 0.9;
+    const float WEIGHT = 0.02;
+
+    void main() {
+      gl_FragColor = texture2D(sunTexture, v_uv);
+
+
+        vec2 lightPositionOnScreen = vec2(0.5f,0.5f);
+        vec2 deltaTexCoord = (v_uv - lightPositionOnScreen) * DENSITY;
+        vec2 texCoord = v_uv;
+        float illuminationDecay = 1.0;
+
+        vec4 color = vec4(0.0);
+        for (int i = 0; i < NUM_SAMPLES; i++) {
+          texCoord -= deltaTexCoord;
+          vec4 sampleColor = texture2D(sunTexture, texCoord);
+          sampleColor *= illuminationDecay * WEIGHT;
+          color += sampleColor;
+          illuminationDecay *= DECAY;
+        }
+
+        gl_FragColor = color;
+      
+    }
+  </script>
+
+
+  <script id="combineVertexShader" type="x-shader/x-fragment">
+    attribute vec3 position; // Vertex position from the geometry
+    attribute vec2 uv;       // UV coordinates from the geometry
+    varying vec2 vUv;        // Pass UV to the fragment shader
+    
+    void main() {
+        vUv = uv; // Pass UV coordinates to the fragment shader
+        gl_Position = vec4(position, 1.0); // Position in clip space
+    }
+  </script>
+
+
+  <script id="combineFragmentShader" type="x-shader/x-fragment">
+    uniform sampler2D sunTexture;
+    uniform sampler2D mainTexture;
+    varying vec2 vUv;
+
+    void main() {
+      vec4 sunColor = texture2D(sunTexture, vUv);
+      vec4 mainColor = texture2D(mainTexture, vUv);
+      gl_FragColor = mix(sunColor, mainColor, mainColor.a); // Blend based on alpha
+    }
+  </script>
   

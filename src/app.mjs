@@ -1,6 +1,11 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createScene, createCamera } from './components.mjs';
+import Stats from 'stats.js';
+
+const stats = new Stats();
+stats.showPanel(0);
+document.body.appendChild(stats.dom);
 
 // variables for three.js
 let renderer, scene, camera, sunScene, controls;
@@ -75,6 +80,7 @@ const uniforms = {
 // event listeners
 
 // update eye tracking data every frame
+
 webgazer.setGazeListener(function(data, event) {
 	if (data == null) {
 		return;
@@ -113,6 +119,14 @@ eyeCheckbox.addEventListener('change', function(){
 var checkbox = document.querySelector("input[name=fr]");
 checkbox.addEventListener('change', function(){
   uniforms.foveate.value = this.checked;
+  if(this.checked && !uniforms.mouse.value){
+    webgazer.resume();
+    webgazer.showVideo(true); 
+  }
+  else{
+    webgazer.pause();
+    webgazer.showVideo(false); 
+  }
 });
 
 // fill pixels
@@ -335,10 +349,13 @@ function init(){
   screenCamera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
 }
 
+
 function animate(){
-  requestAnimationFrame(animate);
+  stats.begin();
+  
   render();
   // renderSun();
+  stats.end();
 }
 
 function renderSun() {

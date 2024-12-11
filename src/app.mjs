@@ -66,8 +66,8 @@ const uniforms = {
   foveate: {value: true},
   mouse: {value: false},
   fill: {value: false},
-  innerRadius: {value: 50},
-  outerRadius: {value: 50},
+  innerRadius: {value: 50.0},
+  outerRadius: {value: 50.0},
   sunTexture: {value: sunTarget.texture},
 
 };
@@ -80,12 +80,13 @@ webgazer.setGazeListener(function(data, event) {
 		return;
 	}
 
-  // iterate through all vertices and transform
+  // transform and update eye coord 
+  eyeCoord = new THREE.Vector2(data.x * devicePixelRatio, (window.innerHeight - data.y) * devicePixelRatio);
+
+  // for having a sphere follow the eyes, iterate through all vertices and transform
   if (mesh != null){
     const x = (data.x / window.innerWidth) * 2 - 1;
     const y = -(data.y / window.innerHeight) * 2 + 1;
-
-    eyeCoord = new THREE.Vector2(data.x * devicePixelRatio, (window.innerHeight - data.y) * devicePixelRatio);
 
     const newPos = new THREE.Vector3(x, y, 1);
     newPos.unproject(camera);
@@ -100,9 +101,11 @@ eyeCheckbox.addEventListener('change', function(){
   uniforms.mouse.value = !this.checked;
   if(this.checked){
     webgazer.resume();
+    webgazer.showVideo(true); 
   }
   else{
     webgazer.pause();
+    webgazer.showVideo(false); 
   }
 });
 
@@ -249,17 +252,17 @@ function init(){
 
   // add mesh with geometry and material to scene
   mesh = new THREE.Mesh(geometry, shaderMaterial);
-  scene.add(mesh);
+  //scene.add(mesh);
 
   // add cave
   const loader = new GLTFLoader();
   loader.load(
-    'src/models/CaveVersion2.glb',
+    'src/models/smushedCave.glb',
     async function( gltf ){
       const model = gltf.scene;
       // rotate and scale to whatever looks good
       model.rotateY(180);
-      model.scale.set(20,20,20);
+      model.scale.set(30,30,30);
 
       /*
       // update materials if using custom shader
@@ -350,6 +353,7 @@ function renderSun() {
 }
 
 function render(){
+  // update variables for foveation
   if(uniforms.mouse.value){
     uniforms.eyeCoord.value = mouseCoord;
   }
@@ -357,25 +361,52 @@ function render(){
     uniforms.eyeCoord.value = eyeCoord;
   }
 
+  let coord = uniforms.eyeCoord.value;
+
+  // render separate textures if foveating
   if(uniforms.foveate.value){
+
+    renderer.setViewport(0,0,window.innerWidth, window.innerHeight);
+
+    // render the entire screen, but only update pixels in the inner radius
+    renderer.setScissorTest(true);
     renderer.setRenderTarget(innerResTarget);
+    renderer.setScissor(coord.x - uniforms.innerRadius.value, 
+                        coord.y - uniforms.innerRadius.value,
+                        uniforms.innerRadius.value * 2,
+                        uniforms.innerRadius.value * 2);
     renderer.render(scene, camera);
+
+    // render the entire screen, but only update pixels in the outer radius
+    renderer.setScissorTest(true);
     renderer.setRenderTarget(medResTarget);
+    renderer.setScissor(coord.x - uniforms.outerRadius.value, 
+                        coord.y - uniforms.outerRadius.value,
+                        uniforms.outerRadius.value * 2,
+                        uniforms.outerRadius.value * 2);
     renderer.render(scene, camera);
+
+    // update all pixels on the screen at lowest resolution
+    renderer.setScissorTest(false);
     renderer.setRenderTarget(outerResTarget);
     renderer.render(scene, camera);
   
+    // update texture uniforms for shader
     uniforms.innerTexture.value = innerResTarget.texture;
     uniforms.medTexture.value = medResTarget.texture;
     uniforms.outerTexture.value = outerResTarget.texture;
   
+    // render to the "screen"
     renderer.setRenderTarget(null);
     renderer.render(screen, screenCamera);
   }
+  // only render one texture if not foveating
   else{
+    // update all pixels on the screen at highest resolution
     renderer.setRenderTarget(innerResTarget);
     renderer.render(scene, camera);
 
+    // render to the "screen"
     renderer.setRenderTarget(null);
     renderer.render(screen, screenCamera);
   }

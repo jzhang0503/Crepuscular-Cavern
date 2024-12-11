@@ -21,7 +21,8 @@
       <input type="checkbox" id="fr" name="fr" checked />
       <label for="fr">Foveated Rendering</label>
 
-      <div>Input Method</div>
+      <div id="fr-1">
+        <div>Input Method</div>
       <div>
         Mouse
         <label class="switch">
@@ -31,7 +32,6 @@
         Eyes
       </div>
 
-      <div id="fr-1">
         <input type="checkbox" id="fr-1" name="fr-1"/>
         <label for="fr-1">Fill Pixels</label>
 
@@ -103,27 +103,7 @@
     layout(location = 0) out vec4 pc_FragColor;
   
     void main() {     
-      vec4 coord = gl_FragCoord;
-
-      vec2 eye = vec2(900.f, 500.f);
-      vec2 pixel = vec2(coord.x, coord.y);
-
-      float distance = distance(eyeCoord, pixel);
-
-      if(distance >= 50.f){
-        float pixelIndex = (coord.y - 0.5f) * windowSize.x + (coord.x - 0.5f);
-
-        if((pixelIndex / 2.f) - floor(pixelIndex / 2.f) != 0.f){
-          pc_FragColor = vec4(1,1,1,1);
-        }
-        else{
-          pc_FragColor = vColor;
-        }
-      }
-
-      if(distance <= 50.f){
-        pc_FragColor = vColor;
-      }
+      pc_FragColor = vColor;
       
     }
   </script>
@@ -173,7 +153,7 @@
         // sample every two pixels outside inner radius
         else if(distance >= innerRadius){
           if(fill || (pixelIndex / 2.f) - floor(pixelIndex / 2.f) == 0.f){
-            gl_FragColor = texture2D(outerTexture, v_uv);
+            gl_FragColor = texture2D(medTexture, v_uv);
           }
           else{
             gl_FragColor = black;

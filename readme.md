@@ -34,6 +34,8 @@ Other Resources:
 - WebGL demo using setScissor: https://threejs.org/examples/?q=mu#webgl_multiple_views
 - WebGL demo using renderTargets: https://threejs.org/examples/?q=mu#webgl_multiple_rendertargets
 
+# Godrays and Texturing
+
 # Known Bugs
 When eye tracking is enabled (Foveated Rendering is toggled on and Eyes, not Mouse are used), the app runs more slowly, sometimes below the minimum 24 fps depending on the machine. We implemented mouse controls as an alternative that seems quicker and allows more direct control to still demonstrate the technical feature.
 

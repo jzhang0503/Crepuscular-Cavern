@@ -278,48 +278,10 @@ function init(){
   mesh = new THREE.Mesh(geometry, shaderMaterial);
   //scene.add(mesh);
 
-  // add cave
-  const loader = new GLTFLoader();
-  loader.load(
-    'src/models/smushedCave.glb',
-    async function( gltf ){
-      const model = gltf.scene;
-      // rotate and scale to whatever looks good
-      model.rotateY(180);
-      model.scale.set(30,30,30);
-
-      /*
-      // update materials if using custom shader
-      model.traverse((o) => {
-        if (o.isMesh) o.material = shaderMaterial;
-      });
-      */
-
-      scene.add(model);
-    },
-    function(error){
-      console.error(error);
-    }
-  )
+  addCave();
 
   Lsystem.basicCrystal(scene, new THREE.Vector3(0,0,0),4);
   Lsystem.basicTree(scene, new THREE.Vector3(0,0,5),6);
-  //create the sun in a seperate scene
-  // sunScene = new THREE.Scene();
-  // sunScene.background = new THREE.Color( 0xf0f0f0 );
-  // const sunGeometry = new THREE.SphereGeometry(20, 20, 20);
-  // sunGeometry.rotateY(0.2);
-
-  // // Create the material for the sun
-  // const sunMaterial = new THREE.MeshBasicMaterial({
-  //   color: 0xffff00, 
-  // });
-
-  // // Create the mesh for the sun and add it to the scene
-  // const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
-  // sunMesh.position.set(-15, 120, -30); // Position the sun in the scene
-  // sunScene.add(sunMesh);
-
 
 // Initialize the EffectComposer
 sceneWithBloom = new THREE.Scene();
@@ -353,31 +315,6 @@ const sunGeometry = new THREE.SphereGeometry(10, 20, 20);
   // Optional: Add gamma correction or other post-processing effects
   composer.addPass(new ShaderPass(GammaCorrectionShader));
 
-
-
-
-
-
-  //GOD RAYS FBO
-  // set up postprocessing for godrays
-  sunScreen = new THREE.Scene();
-  sunScreen.background = new THREE.Color( 0xf0f0f0 );
-
-  // use custom shader to get texture coordinates
-  const sunScreenMaterial = new THREE.ShaderMaterial({
-    uniforms: uniforms,
-    vertexShader: document.getElementById('vertexShader2').textContent,
-    fragmentShader: document.getElementById('fragmentShader2').textContent,
-  });
-
-  // project texture on to plane positioned like a screen
-  const sunPlaneGeometry = new THREE.PlaneGeometry(2, 2);
-  const sunPlane = new THREE.Mesh(sunPlaneGeometry, sunScreenMaterial);
-  sunScreen.add(sunPlane);
-  
-  // set up camera in front of screen
-  sunScreenCamera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
-
   //FOVEATION FBO
   // set up postprocessing for foveation
   screen = new THREE.Scene();
@@ -399,6 +336,119 @@ const sunGeometry = new THREE.SphereGeometry(10, 20, 20);
   screenCamera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
 }
 
+function addCave() {
+  // Vertex Shader
+  const cavevertexShader = `
+  varying vec3 vWorldPosition;
+  varying vec3 vNormal;
+
+  void main() {
+    vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
+    vNormal = normalize(normalMatrix * normal);
+
+    gl_Position = projectionMatrix * viewMatrix * vec4(vWorldPosition, 1.0);
+  }
+  `;
+
+  // Fragment Shader
+  const cavefragmentShader = `
+  uniform sampler2D textureX; // Texture projected along the X-axis
+uniform sampler2D textureY; // Texture projected along the Y-axis
+uniform sampler2D textureZ; // Texture projected along the Z-axis
+
+varying vec3 vWorldPosition;
+varying vec3 vNormal;
+
+void main() {
+    // Get absolute normal for blending weights
+    vec3 absNormal = abs(normalize(vNormal));
+    vec3 blendWeights = absNormal / (absNormal.x + absNormal.y + absNormal.z);
+
+    // Scale UV coordinates for better tiling
+    float scale = 0.011;
+    vec2 texCoordX = vWorldPosition.yz * scale;
+    vec2 texCoordY = vWorldPosition.zx * scale;
+    vec2 texCoordZ = vWorldPosition.xy * scale;
+
+    // Sample each texture
+    vec4 colorX = texture2D(textureX, texCoordX);
+    vec4 colorY = texture2D(textureY, texCoordY);
+    vec4 colorZ = texture2D(textureZ, texCoordZ);
+
+    // Blend based on normal directions
+    vec4 finalColor = colorX * blendWeights.x + colorY * blendWeights.y + colorZ * blendWeights.z;
+
+    gl_FragColor = finalColor;
+    // gl_FragColor = vec4(blendWeights, 1.0); // Visualize blend weights as RGB
+}
+  `;
+
+  // Load textures for triplanar mapping
+  const textureLoader = new THREE.TextureLoader();
+  const texture = textureLoader.load('src/models/caveTexture.jpg');
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 1); // Adjust tiling here if needed
+
+  // Create custom shader material
+  const triplanarMaterial = new THREE.ShaderMaterial({
+  vertexShader: cavevertexShader,
+  fragmentShader: cavefragmentShader,
+  uniforms: {
+    textureX: { value: texture },
+    textureY: { value: texture },
+    textureZ: { value: texture },
+  },
+  });
+
+  // add cave
+  const loader = new GLTFLoader();
+  loader.load(
+    'src/models/smushedCave.glb',
+    async function( gltf ){
+      const model = gltf.scene;
+      // rotate and scale to whatever looks good
+      model.rotateY(180);
+      model.scale.set(30,30,30);
+
+      // Traverse and apply the triplanar material
+      model.traverse((o) => {
+        if (o.isMesh) {
+          o.geometry.computeVertexNormals(); // Recalculate normals
+          o.material = triplanarMaterial;
+        }
+      });
+
+
+    // const textureLoader = new THREE.TextureLoader();
+    // const caveTexture = textureLoader.load('src/models/caveTexture.jpg'); 
+
+    // model.traverse((o) => {
+    //   if (o.isMesh) {
+    //     // Create or modify the material to include the texture
+    //     o.material = new THREE.MeshStandardMaterial({
+    //       map: caveTexture, // Apply the loaded texture
+    //       // roughness: 0.5, // Adjust roughness for better appearance
+    //     });
+    //   }
+    // });
+
+      /*
+      // update materials if using custom shader
+      model.traverse((o) => {
+        if (o.isMesh) o.material = shaderMaterial;
+      });
+      */
+
+      scene.add(model);
+    },
+    function(error){
+      console.error(error);
+    }
+  )
+
+
+}
 
 function animate(){
   renderSun();

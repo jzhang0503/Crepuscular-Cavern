@@ -371,45 +371,24 @@ function init(){
 
   // add mesh with geometry and material to scene
   mesh = new THREE.Mesh(geometry, shaderMaterial);
+  //scene.add(mesh);
 
   addCave();
 
   Lsystem.basicCrystal(scene, new THREE.Vector3(0,0,0),4);
   Lsystem.basicTree(scene, new THREE.Vector3(0,0,5),6);
 
-  initBloom();
+// Initialize the EffectComposer
+sceneWithBloom = new THREE.Scene();
 
-  initFBO();
-}
+// const sunGeometry = new THREE.SphereGeometry(10, 20, 20);
+//   const sunMaterial = new THREE.MeshBasicMaterial({
+//     color: 0xffff00,
+//   });
+//   const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
+//   sunMesh.position.set(-15, 120, -30);
+//   sceneWithBloom.add(sunMesh);
 
-function addCave() {
-  // load in the cave from blender
-  const loader = new GLTFLoader();
-  loader.load(
-    'src/models/ClosedCave.glb',
-    async function( gltf ){
-      const model = gltf.scene;
-      // rotate and scale cave
-      model.rotateY(180);
-      model.scale.set(30,30,30);
-
-      model.traverse((o) => {
-        if (o.isMesh) {
-          // Save the original material to userData
-          o.userData.originalMaterial = o.material.clone();
-        }
-      });
-
-      caveMesh = model;
-      scene.add(model);
-    },
-    function(error){
-      console.error(error);
-    }
-  )
-}
-
-function initBloom() {
   // Create the render target for post-processing
   renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
 
@@ -442,9 +421,7 @@ function initBloom() {
   medComposer.addPass(new ShaderPass(GammaCorrectionShader));
   outerComposer.addPass(new ShaderPass(GammaCorrectionShader));
   composer.addPass(new ShaderPass(GammaCorrectionShader));
-}
 
-function initFBO() {
   //FOVEATION FBO
   // set up postprocessing for foveation
   screen = new THREE.Scene();
@@ -464,6 +441,45 @@ function initFBO() {
 
   // set up camera in front of screen
   screenCamera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+}
+
+function addCave() {
+  // add cave
+  const loader = new GLTFLoader();
+  loader.load(
+    'src/models/smushedCave.glb',
+    async function( gltf ){
+      const model = gltf.scene;
+      // rotate and scale to whatever looks good
+      model.rotateY(180);
+      model.scale.set(30,30,30);
+
+      model.traverse((o) => {
+        if (o.isMesh) {
+          // Save the original material to userData
+          o.userData.originalMaterial = o.material.clone();
+        }
+      });
+
+      caveMesh = model;
+    // const textureLoader = new THREE.TextureLoader();
+    // const caveTexture = textureLoader.load('src/models/caveTexture.jpg'); 
+
+    // model.traverse((o) => {
+    //   if (o.isMesh) {
+    //     // Create or modify the material to include the texture
+    //     o.material = new THREE.MeshStandardMaterial({
+    //       map: caveTexture, // Apply the loaded texture
+    //       // roughness: 0.5, // Adjust roughness for better appearance
+    //     });
+    //   }
+    // });
+      scene.add(model);
+    },
+    function(error){
+      console.error(error);
+    }
+  )
 }
 
 function animate(){
@@ -558,7 +574,6 @@ function render(){
   }
   
 }
-
 
 
 

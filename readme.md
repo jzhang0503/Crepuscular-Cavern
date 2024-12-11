@@ -35,6 +35,9 @@ Other Resources:
 - WebGL demo using renderTargets: https://threejs.org/examples/?q=mu#webgl_multiple_rendertargets
 
 # Godrays and Texturing
+Crepuscular lighting is comes from sunbeams during twilight hours that are obstructed by clouds/particles in the air. We tried to implement godrays based on [this article](https://fabiensanglard.net/lightScattering/) but struggled with combining scenes after postprocessing. We then pivoted to using the Effect Composer abilities of Three.js to render a bloom effect to the scene. Because this process was not as technical as hard coding the godrays we also added texturing to the cave to increase the scenes complexity and make it more interactive. 
+
+We added texturing to the cave using triplanar mapping. We chose four different textures to apply to the cave and toggle on and off using the menu. Our caveVertexShader and caveFragmentShader apply triplanar mapping to the cave when a checkbox is clicked using the corresponding texture. If no checkbox is toggled the original material of the cave is stored in userData and then reapplied to the cave.
 
 # Known Bugs
 When eye tracking is enabled (Foveated Rendering is toggled on and Eyes, not Mouse are used), the app runs more slowly, sometimes below the minimum 24 fps depending on the machine. We implemented mouse controls as an alternative that seems quicker and allows more direct control to still demonstrate the technical feature.

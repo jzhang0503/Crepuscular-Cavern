@@ -80,7 +80,7 @@ const uniforms = {
   medTexture: {value: medResTarget.texture},
   outerTexture: {value: outerResTarget.texture},
   foveate: {value: true},
-  texture1: {value: false},
+  glow: {value: false},
   mouse: {value: false},
   fill: {value: false},
   innerRadius: {value: 50.0},
@@ -231,6 +231,12 @@ texture4Checkbox.addEventListener('change', function(){
       }
     });
   }
+});
+
+var lightCheckbox = document.querySelector("input[name=glow]");
+lightCheckbox.addEventListener('change', function(){
+  uniforms.glow.value = this.checked;
+
 });
 
 // adjust foveation radii
@@ -462,13 +468,17 @@ function addCave() {
 }
 
 function animate(){
-  renderSun();
-  // render();
+  if (uniforms.glow.value) {
+    renderSun();
+  }
+  else {
+  render();
   stats.begin();
   
   render();
   // renderSun();
   stats.end();
+  }
 }
 
 function renderSun() {

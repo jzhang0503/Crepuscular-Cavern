@@ -84,7 +84,6 @@ const uniforms = {
   outerRadius: {value: 50.0},
   sunTexture: {value: sunTarget.texture},
   sunOn: {value: false},
-
 };
 
 // event listeners
@@ -337,52 +336,6 @@ const sunGeometry = new THREE.SphereGeometry(10, 20, 20);
 }
 
 function addCave() {
-  // Vertex Shader
-  const cavevertexShader = `
-  varying vec3 vWorldPosition;
-  varying vec3 vNormal;
-
-  void main() {
-    vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
-    vNormal = normalize(normalMatrix * normal);
-
-    gl_Position = projectionMatrix * viewMatrix * vec4(vWorldPosition, 1.0);
-  }
-  `;
-
-  // Fragment Shader
-  const cavefragmentShader = `
-  uniform sampler2D textureX; // Texture projected along the X-axis
-uniform sampler2D textureY; // Texture projected along the Y-axis
-uniform sampler2D textureZ; // Texture projected along the Z-axis
-
-varying vec3 vWorldPosition;
-varying vec3 vNormal;
-
-void main() {
-    // Get absolute normal for blending weights
-    vec3 absNormal = abs(normalize(vNormal));
-    vec3 blendWeights = absNormal / (absNormal.x + absNormal.y + absNormal.z);
-
-    // Scale UV coordinates for better tiling
-    float scale = 0.011;
-    vec2 texCoordX = vWorldPosition.yz * scale;
-    vec2 texCoordY = vWorldPosition.zx * scale;
-    vec2 texCoordZ = vWorldPosition.xy * scale;
-
-    // Sample each texture
-    vec4 colorX = texture2D(textureX, texCoordX);
-    vec4 colorY = texture2D(textureY, texCoordY);
-    vec4 colorZ = texture2D(textureZ, texCoordZ);
-
-    // Blend based on normal directions
-    vec4 finalColor = colorX * blendWeights.x + colorY * blendWeights.y + colorZ * blendWeights.z;
-
-    gl_FragColor = finalColor;
-    // gl_FragColor = vec4(blendWeights, 1.0); // Visualize blend weights as RGB
-}
-  `;
-
   // Load textures for triplanar mapping
   const textureLoader = new THREE.TextureLoader();
   const texture = textureLoader.load('src/models/caveTexture.jpg');
@@ -392,8 +345,8 @@ void main() {
 
   // Create custom shader material
   const triplanarMaterial = new THREE.ShaderMaterial({
-  vertexShader: cavevertexShader,
-  fragmentShader: cavefragmentShader,
+  vertexShader: document.getElementById('caveVertexShader').textContent,
+  fragmentShader: document.getElementById('caveFragmentShader').textContent,
   uniforms: {
     textureX: { value: texture },
     textureY: { value: texture },
@@ -461,15 +414,6 @@ function animate(){
 }
 
 function renderSun() {
-  // renderer.setRenderTarget(sunTarget);
-  // renderer.render(sunScene, camera);
-
-  // uniforms.sunTexture.value = sunTarget.texture;
-  // uniforms.sunOn.value = true;
-
-  // renderer.setRenderTarget(null);
-  // renderer.render(sunScreen, sunScreenCamera);
-
   renderer.setRenderTarget(renderTarget);
   composer.render();
 }

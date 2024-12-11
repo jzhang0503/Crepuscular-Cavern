@@ -396,10 +396,12 @@ sceneWithBloom = new THREE.Scene();
   innerComposer = new EffectComposer(renderer, innerResTarget);
   medComposer = new EffectComposer(renderer, medResTarget);
   outerComposer = new EffectComposer(renderer, outerResTarget);
+  composer = new EffectComposer(renderer, renderTarget);
   
   innerComposer.addPass(new RenderPass(scene, camera));
   medComposer.addPass(new RenderPass(scene, camera));
   outerComposer.addPass(new RenderPass(scene, camera));
+  composer.addPass(new RenderPass(scene, camera));
 
   // Set up bloom effect (only applies to the scene with the sun)
   bloomPass = new UnrealBloomPass(
@@ -412,11 +414,13 @@ sceneWithBloom = new THREE.Scene();
   innerComposer.addPass(bloomPass);
   medComposer.addPass(bloomPass);
   outerComposer.addPass(bloomPass);
+  composer.addPass(bloomPass);
 
   // Add gamma correction or other post-processing effects
   innerComposer.addPass(new ShaderPass(GammaCorrectionShader));
   medComposer.addPass(new ShaderPass(GammaCorrectionShader));
   outerComposer.addPass(new ShaderPass(GammaCorrectionShader));
+  composer.addPass(new ShaderPass(GammaCorrectionShader));
 
   //FOVEATION FBO
   // set up postprocessing for foveation
@@ -508,6 +512,7 @@ function render(){
                         uniforms.innerRadius.value * 2,
                         uniforms.innerRadius.value * 2);
     innerComposer.render();
+    
 
     // render the entire screen, but only update pixels in the outer radius
     renderer.setScissorTest(true);

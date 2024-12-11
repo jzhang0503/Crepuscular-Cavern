@@ -11,6 +11,7 @@ import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectio
 import * as Lsystem from './lsystems/lsystem'
 
 import Stats from 'stats.js';
+import { randInt } from 'three/src/math/MathUtils.js';
 
 const stats = new Stats();
 stats.showPanel(0);
@@ -239,6 +240,18 @@ lightCheckbox.addEventListener('change', function(){
   uniforms.glow.value = this.checked;
 
 });
+
+document.getElementById("generate").onclick = function(){
+  //random coordinate in the bounds (10-40,0-10,-30-0 )
+  const x = Math.random() * 30 + 10;
+  const y = Math.random() * 10;
+  const z = Math.random() * 30 - 30;
+  const boxGeometry = new THREE.BoxGeometry(.2,.2,.4);
+  const lSystem = Lsystem.generateLSystem('F', { 'F': 'F[+F][-F]^F[F]\\F/F' }, randInt(1, 4));
+  const crystal = Lsystem.drawLSystem(scene, lSystem, 0.2, Math.PI / 2, new THREE.Vector3(x, y, z), boxGeometry);
+  scene.add(crystal);
+  console.log('crystal');
+}
 
 // adjust foveation radii
 document.getElementById("innerRadius").oninput = function() {
@@ -572,6 +585,9 @@ function render(){
     }
     
   }
+  
+  
+
   
 }
 

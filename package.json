@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "stats-js": "^1.0.1",
     "stats.js": "^0.17.0",
     "three": "^0.171.0",
     "three-addons": "^1.2.0",

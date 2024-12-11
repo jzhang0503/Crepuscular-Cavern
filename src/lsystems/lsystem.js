@@ -31,14 +31,16 @@ export function generateLSystem(axiom, rules, iterations) {
  * @param {THREE.Material} gradient - The material to use for each segment
  */
 export function drawLSystem(scene, lSystem, length, angle, position = new THREE.Vector3(0, 0, 0), geometry = new THREE.ConeGeometry(.05, .1, 4), gradient = new THREE.MeshPhysicalMaterial({
-    color: 0x0000ff,
+    color: 0xf14bdf,
     metalness: 0.5,
     roughness: 0.5,
     clearcoat: 1,
     clearcoatRoughness: 0.1,
     reflectivity: 1,
     envMapIntensity: 1,
-    side: THREE.DoubleSide
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.5
 })) {
     const group = new THREE.Group();
     const stack = [];

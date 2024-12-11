@@ -398,7 +398,6 @@ const sunGeometry = new THREE.SphereGeometry(10, 20, 20);
 
 
 function animate(){
-  requestAnimationFrame(animate);
   renderSun();
   // render();
   stats.begin();

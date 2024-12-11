@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createScene, createCamera } from './components.mjs';
+import {texture1, texture2, texture3, texture4} from './textures.mjs';
 
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
@@ -16,7 +17,7 @@ stats.showPanel(0);
 document.body.appendChild(stats.dom);
 
 // variables for three.js
-let renderer, scene, camera, sunScene, controls;
+let renderer, scene, camera, caveMesh, controls;
 let composer, bloomPass, renderTarget, sceneWithoutBloom, sceneWithBloom;
 let mesh;
 let rotating = false;
@@ -55,16 +56,17 @@ const outerResTarget= new THREE.WebGLRenderTarget(
     magFilter: THREE.NearestFilter
   }
 );
-const sunTarget= new THREE.WebGLRenderTarget(
-  window.innerWidth * window.devicePixelRatio,
-  window.innerHeight * window.devicePixelRatio,
-  {
-    count: 1,
-    minFilter: THREE.NearestFilter,
-    magFilter: THREE.NearestFilter
-  }
-);
 
+// Create custom shader material for texturing
+const triplanarMaterial = new THREE.ShaderMaterial({
+  vertexShader: document.getElementById('caveVertexShader').textContent,
+  fragmentShader: document.getElementById('caveFragmentShader').textContent,
+  uniforms: {
+    textureX: { value: texture1 },
+    textureY: { value: texture1 },
+    textureZ: { value: texture1 },
+  },
+});
 
 // // scene and camera for fbo rendering
 let screen, screenCamera, sunScreen ,sunScreenCamera;
@@ -78,18 +80,16 @@ const uniforms = {
   medTexture: {value: medResTarget.texture},
   outerTexture: {value: outerResTarget.texture},
   foveate: {value: true},
+  texture1: {value: false},
   mouse: {value: false},
   fill: {value: false},
   innerRadius: {value: 50.0},
   outerRadius: {value: 50.0},
-  sunTexture: {value: sunTarget.texture},
-  sunOn: {value: false},
 };
 
 // event listeners
 
 // update eye tracking data every frame
-
 webgazer.setGazeListener(function(data, event) {
 	if (data == null) {
 		return;
@@ -142,6 +142,95 @@ checkbox.addEventListener('change', function(){
 var fillCheckbox = document.querySelector("input[name=fr-1]");
 fillCheckbox.addEventListener('change', function(){
   uniforms.fill.value = this.checked;
+});
+
+// adjust textures
+var textureCheckbox = document.querySelector("input[name=texture]");
+textureCheckbox.addEventListener('change', function(){
+  if (this.checked) {
+    caveMesh.traverse((o) => {
+      if (o.isMesh) {
+        // Update the texture in the triplanar shader
+        o.material = triplanarMaterial;
+        o.material.uniforms.textureX.value = texture1;
+        o.material.uniforms.textureY.value = texture1;
+        o.material.uniforms.textureZ.value = texture1;
+      }
+    });
+  }
+  else {
+    caveMesh.traverse((o) => {
+      if (o.isMesh) {
+        o.material = o.userData.originalMaterial.clone(); // Restore the original material
+      }
+    });
+  }
+});
+
+var texture2Checkbox = document.querySelector("input[name=texture2]");
+texture2Checkbox.addEventListener('change', function(){
+  if (this.checked) {
+    caveMesh.traverse((o) => {
+      if (o.isMesh) {
+        // Update the texture in the triplanar shader
+        o.material = triplanarMaterial;
+        o.material.uniforms.textureX.value = texture2;
+        o.material.uniforms.textureY.value = texture2;
+        o.material.uniforms.textureZ.value = texture2;
+      }
+    });
+  }
+  else {
+    caveMesh.traverse((o) => {
+      if (o.isMesh) {
+        o.material = o.userData.originalMaterial.clone(); // Restore the original material
+      }
+    });
+  }
+});
+
+var texture3Checkbox = document.querySelector("input[name=texture3]");
+texture3Checkbox.addEventListener('change', function(){
+  if (this.checked) {
+    caveMesh.traverse((o) => {
+      if (o.isMesh) {
+        // Update the texture in the triplanar shader
+        o.material = triplanarMaterial;
+        o.material.uniforms.textureX.value = texture3;
+        o.material.uniforms.textureY.value = texture3;
+        o.material.uniforms.textureZ.value = texture3;
+      }
+    });
+  }
+  else {
+    caveMesh.traverse((o) => {
+      if (o.isMesh) {
+        o.material = o.userData.originalMaterial.clone(); // Restore the original material
+      }
+    });
+  }
+});
+
+var texture4Checkbox = document.querySelector("input[name=texture4]");
+texture4Checkbox.addEventListener('change', function(){
+  if (this.checked) {
+    caveMesh.traverse((o) => {
+      if (o.isMesh) {
+        // Update the texture in the triplanar shader
+        o.material = triplanarMaterial;
+        o.material.uniforms.textureX.value = texture4;
+        o.material.uniforms.textureY.value = texture4;
+        o.material.uniforms.textureZ.value = texture4;
+      }
+    });
+  }
+  else {
+    caveMesh.traverse((o) => {
+      if (o.isMesh) {
+        o.material = o.userData.originalMaterial.clone(); // Restore the original material
+      }
+    });
+  }
 });
 
 // adjust foveation radii
@@ -285,15 +374,13 @@ function init(){
 // Initialize the EffectComposer
 sceneWithBloom = new THREE.Scene();
 
-const sunGeometry = new THREE.SphereGeometry(10, 20, 20);
-  const sunMaterial = new THREE.MeshBasicMaterial({
-    color: 0xffff00,
-    // emissive: 0xffff00,
-    // emissiveIntensity: 1,
-  });
-  const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
-  sunMesh.position.set(-15, 120, -30);
-  sceneWithBloom.add(sunMesh);
+// const sunGeometry = new THREE.SphereGeometry(10, 20, 20);
+//   const sunMaterial = new THREE.MeshBasicMaterial({
+//     color: 0xffff00,
+//   });
+//   const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
+//   sunMesh.position.set(-15, 120, -30);
+//   sceneWithBloom.add(sunMesh);
 
   // Create the render target for post-processing
   renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
@@ -336,24 +423,6 @@ const sunGeometry = new THREE.SphereGeometry(10, 20, 20);
 }
 
 function addCave() {
-  // Load textures for triplanar mapping
-  const textureLoader = new THREE.TextureLoader();
-  const texture = textureLoader.load('src/models/caveTexture.jpg');
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(1, 1); // Adjust tiling here if needed
-
-  // Create custom shader material
-  const triplanarMaterial = new THREE.ShaderMaterial({
-  vertexShader: document.getElementById('caveVertexShader').textContent,
-  fragmentShader: document.getElementById('caveFragmentShader').textContent,
-  uniforms: {
-    textureX: { value: texture },
-    textureY: { value: texture },
-    textureZ: { value: texture },
-  },
-  });
-
   // add cave
   const loader = new GLTFLoader();
   loader.load(
@@ -364,15 +433,14 @@ function addCave() {
       model.rotateY(180);
       model.scale.set(30,30,30);
 
-      // Traverse and apply the triplanar material
       model.traverse((o) => {
         if (o.isMesh) {
-          o.geometry.computeVertexNormals(); // Recalculate normals
-          o.material = triplanarMaterial;
+          // Save the original material to userData
+          o.userData.originalMaterial = o.material.clone();
         }
       });
 
-
+      caveMesh = model;
     // const textureLoader = new THREE.TextureLoader();
     // const caveTexture = textureLoader.load('src/models/caveTexture.jpg'); 
 
@@ -385,22 +453,12 @@ function addCave() {
     //     });
     //   }
     // });
-
-      /*
-      // update materials if using custom shader
-      model.traverse((o) => {
-        if (o.isMesh) o.material = shaderMaterial;
-      });
-      */
-
       scene.add(model);
     },
     function(error){
       console.error(error);
     }
   )
-
-
 }
 
 function animate(){
